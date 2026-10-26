@@ -1,0 +1,344 @@
+[mode] cyc=0 64b_mode -> 1
+[sr] cyc 0 sr=54400004 KX=0 KSU=0 EXL=0 ERL=1
+[sr] cyc 150 sr=64000000 KX=0 KSU=0 EXL=0 ERL=0
+TSVC_BEGIN
+s111  n=100 iters=10000 count=24736 sum=1.004063e2 [0x42c8d005]
+s112  n=100 iters=9900 count=22316 sum=2.583110e2 [0x438127d0]
+s113  n=100 iters=9900 count=17093 sum=1.006350e2 [0x42c9451f]
+s114  n=100 iters=9900 count=62298 sum=3.531237e2 [0x43b08fd6]
+s115  n=100 iters=9900 count=38973 sum=9.998996e1 [0x42c7fadc]
+s116  n=100 iters=10000 count=87330 sum=1.000000e2 [0x42c80000]
+s118  n=100 iters=9900 count=39419 sum=1.000094e2 [0x42c804cd]
+s119  n=100 iters=9801 count=41710 sum=1.309936e4 [0x464cad6c]
+s121  n=100 iters=9900 count=22325 sum=1.051774e2 [0x42d25ad3]
+s122  n=100 iters=10000 count=25808 sum=2.634984e2 [0x4383bfcb]
+s123  n=100 iters=10000 count=65885 sum=1.032503e2 [0x42ce8021]
+s124  n=100 iters=10000 count=45219 sum=5.162514e1 [0x424e8024]
+s125  n=100 iters=10000 count=135913 sum=2.000000e4 [0x469c4000]
+s126  n=100 iters=9900 count=111245 sum=1.045960e4 [0x46236e67]
+s127  n=100 iters=10000 count=48383 sum=1.032503e2 [0x42ce8021]
+s128  n=100 iters=10000 count=42282 sum=2.500000e2 [0x437a0000]
+s131  n=100 iters=9900 count=22262 sum=1.051774e2 [0x42d25ad3]
+s132  n=100 iters=9999 count=24990 sum=1.000209e4 [0x461c4860]
+s141  n=100 iters=10000 count=42511 sum=1.015992e4 [0x461ebfa9]
+s151  n=100 iters=9900 count=24211 sum=1.051774e2 [0x42d25ad3]
+s152  n=100 iters=10000 count=103292 sum=2.202007e2 [0x435c3361]
+s161  n=100 iters=9900 count=55988 sum=2.020363e2 [0x434a094e]
+s162  n=100 iters=9900 count=36445 sum=1.051774e2 [0x42d25ad3]
+s171  n=100 iters=10000 count=25031 sum=2.634984e2 [0x4383bfcb]
+s172  n=100 iters=10000 count=26385 sum=2.634984e2 [0x4383bfcb]
+s173  n=100 iters=10000 count=24811 sum=1.016252e2 [0x42cb4014]
+s174  n=100 iters=10000 count=24265 sum=1.016251e2 [0x42cb4012]
+s175  n=100 iters=9900 count=25060 sum=1.051774e2 [0x42d25ad3]
+s176  n=100 iters=10000 count=18452 sum=1.165626e2 [0x42e92013]
+s211  n=100 iters=9800 count=48278 sum=1.915500e2 [0x433f8ccc]
+s212  n=100 iters=9900 count=54952 sum=2.041874e2 [0x434c2ffa]
+s221  n=100 iters=9900 count=70265 sum=1.153202e4 [0x46343018]
+s222  n=100 iters=9900 count=69197 sum=1.000000e2 [0x42c80000]
+s231  n=100 iters=9900 count=41212 sum=1.809317e4 [0x468d5a59]
+s232  n=100 iters=9900 count=56969 sum=1.000000e4 [0x461c4000]
+s233  n=100 iters=19602 count=92086 sum=6.321979e4 [0x4776f3cb]
+s234  n=100 iters=9900 count=171413 sum=1.809317e4 [0x468d5a59]
+s235  n=100 iters=9900 count=49945 sum=2.355233e4 [0x46b800a7]
+s241  n=100 iters=9900 count=45514 sum=2.000000e2 [0x43480000]
+s242  n=100 iters=9900 count=96101 sum=1.485000e4 [0x46680803]
+s243  n=100 iters=9900 count=75603 sum=9.468636e2 [0x446cb746]
+s244  n=100 iters=9900 count=44325 sum=2.000187e2 [0x434804ca]
+s251  n=100 iters=10000 count=37291 sum=1.043523e2 [0x42d0b45f]
+s252  n=100 iters=10000 count=23955 sum=1.990000e2 [0x43470000]
+s253  n=100 iters=10000 count=104257 sum=1.019997e4 [0x461f5fe6]
+s254  n=100 iters=10000 count=23076 sum=1.000000e2 [0x42c80000]
+s255  n=100 iters=10000 count=32210 sum=9.990004e1 [0x42c7ccd2]
+s256  n=100 iters=9900 count=94348 sum=2.010000e4 [0x469d0800]
+s257  n=100 iters=9900 count=74816 sum=2.010000e4 [0x469d0800]
+s258  n=100 iters=10000 count=77814 sum=1.277877e1 [0x414c75d7]
+s261  n=100 iters=9900 count=50039 sum=3.286217e2 [0x43a44f95]
+s271  n=100 iters=10000 count=97619 sum=2.634984e2 [0x4383bfcb]
+s272  n=100 iters=10000 count=175389 sum=5.269968e2 [0x4403bfcb]
+s273  n=100 iters=10000 count=225348 sum=3.000098e2 [0x43960140]
+s274  n=100 iters=10000 count=73015 sum=1.036513e4 [0x4621f489]
+s275  n=100 iters=9801 count=123237 sum=1.000000e4 [0x461c4000]
+s276  n=100 iters=10000 count=44890 sum=2.634984e2 [0x4383bfcb]
+s277  n=100 iters=9900 count=33343 sum=1.000000e2 [0x42c80000]
+s278  n=100 iters=10000 count=100723 sum=2.068224e2 [0x434ed288]
+s279  n=100 iters=10000 count=105277 sum=2.084764e2 [0x435079f3]
+s2710 n=100 iters=10000 count=78383 sum=3.032700e2 [0x4397a290]
+s2711 n=100 iters=10000 count=98458 sum=2.634984e2 [0x4383bfcb]
+s2712 n=100 iters=10000 count=47268 sum=1.634984e2 [0x43237f94]
+s281  n=100 iters=10000 count=67018 sum=1.000000e2 [0x42c80000]
+s291  n=100 iters=10000 count=37999 sum=1.000000e2 [0x42c80000]
+s292  n=100 iters=10000 count=43775 sum=9.990004e1 [0x42c7ccd2]
+s293  n=100 iters=10000 count=16391 sum=1.000000e2 [0x42c80000]
+s2101 n=100 iters=10000 count=46708 sum=1.016350e4 [0x461ecdff]
+s2102 n=100 iters=10000 count=29735 sum=1.000000e2 [0x42c80000]
+s2111 n=100 iters=9801 count=26483 sum=3.000000e0 [0x40400000]
+s311  n=100 iters=10000 count=16669 sum=5.187378e0 [0x40a5ff00]
+s312  n=100 iters=10000 count=13076 sum=1.000095e0 [0x3f800320]
+s313  n=100 iters=10000 count=31966 sum=1.634984e0 [0x3fd14728]
+s314  n=100 iters=10000 count=32523 sum=1.000000e0 [0x3f800000]
+s315  n=100 iters=10000 count=78556 sum=2.000000e0 [0x40000000]
+s316  n=100 iters=10000 count=76052 sum=10.000000e-3 [0x3c23d70a]
+s317  n=100 iters=10000 count=7742 sum=9.989990e-1 [0x3f7fbe66]
+s318  n=100 iters=9900 count=180670 sum=1.020000e2 [0x42cc0000]
+s319  n=100 iters=10000 count=68992 sum=2.074952e1 [0x41a5ff02]
+s3110 n=100 iters=10000 count=119517 sum=2.020000e2 [0x434a0000]
+s3111 n=100 iters=10000 count=77578 sum=5.187378e0 [0x40a5ff00]
+s3112 n=100 iters=10000 count=34131 sum=1.615810e2 [0x432194bb]
+s3113 n=100 iters=9900 count=32269 sum=2.000000e0 [0x40000000]
+s321  n=100 iters=9900 count=61304 sum=1.000000e2 [0x42c80000]
+s322  n=100 iters=9800 count=90041 sum=1.000000e2 [0x42c80000]
+s323  n=100 iters=9900 count=66240 sum=4.391492e2 [0x43db9318]
+s331  n=100 iters=10000 count=32273 sum=1.000000e2 [0x42c80000]
+s332  n=100 iters=10000 count=33144 sum=1.020000e2 [0x42cc0000]
+s341  n=100 iters=10000 count=75318 sum=5.187378e0 [0x40a5ff00]
+s342  n=100 iters=10000 count=127198 sum=5.187378e0 [0x40a5ff00]
+s343  n=100 iters=10000 count=119649 sum=5.187376e2 [0x4401af35]
+s351  n=100 iters=10000 count=123427 sum=5.010000e4 [0x4743b400]
+s352  n=100 iters=10000 count=142385 sum=1.634984e0 [0x3fd14726]
+s353  n=100 iters=10000 count=165247 sum=5.010000e4 [0x4743b400]
+s411  n=100 iters=10000 count=91205 sum=2.634984e2 [0x4383bfcb]
+s412  n=100 iters=10000 count=91886 sum=2.634984e2 [0x4383bfcb]
+s413  n=100 iters=9900 count=111899 sum=3.631234e2 [0x43b58fcb]
+s414  n=100 iters=9800 count=125455 sum=1.913065e4 [0x4695754e]
+s415  n=100 iters=9900 count=94586 sum=2.614884e2 [0x4382be83]
+s421  n=100 iters=9900 count=23007 sum=1.051774e2 [0x42d25ad3]
+s422  n=100 iters=9200 count=22878 sum=5.229314e1 [0x42512c2e]
+s423  n=100 iters=9900 count=22625 sum=1.006409e2 [0x42c9481e]
+s424  n=100 iters=9900 count=22657 sum=1.032517e2 [0x42ce80d9]
+s431  n=100 iters=10000 count=22425 sum=2.634984e2 [0x4383bfcb]
+s432  n=100 iters=10000 count=23239 sum=2.634984e2 [0x4383bfcb]
+s441  n=100 iters=10000 count=103552 sum=2.634984e2 [0x4383bfcb]
+s442  n=100 iters=10000 count=185223 sum=2.634984e2 [0x4383bfcb]
+s443  n=100 iters=10000 count=42451 sum=2.634984e2 [0x4383bfcb]
+retiring ffffffff80012328 cycle 37091975 mult $a0, $v1, 0.452314 IPC , insns_retired 16777216, mispredict pki 10.679901 
+s451  n=100 iters=10000 count=8191237 sum=1.042217e2 [0x42d07182]
+s452  n=100 iters=10000 count=33718 sum=1.000051e2 [0x42c80297]
+s453  n=100 iters=10000 count=33038 sum=1.037476e1 [0x4125ff00]
+s471  n=100 iters=10000 count=58121 sum=2.049050e2 [0x434ce7ac]
+s481  n=100 iters=10000 count=47769 sum=2.634984e2 [0x4383bfcb]
+s482  n=100 iters=10000 count=42844 sum=2.634984e2 [0x4383bfcb]
+s491  n=100 iters=10000 count=39862 sum=1.016350e2 [0x42cb451e]
+s4112 n=100 iters=10000 count=30863 sum=6.187377e2 [0x441aaf36]
+s4113 n=100 iters=10000 count=32442 sum=1.016350e2 [0x42cb451e]
+s4114 n=100 iters=10000 count=35751 sum=1.001035e2 [0x42c834fe]
+s4115 n=100 iters=10000 count=34876 sum=1.028894e0 [0x3f83b2cf]
+s4116 n=100 iters=9900 count=37419 sum=7.471691e-1 [0x3f3f467a]
+s4117 n=100 iters=9900 count=41449 sum=1.004162e2 [0x42c8d51a]
+s4121 n=100 iters=10000 count=28299 sum=2.634984e2 [0x4383bfcb]
+va    n=100 iters=10000 count=16897 sum=1.634984e0 [0x3fd14728]
+vag   n=100 iters=10000 count=22690 sum=1.634984e0 [0x3fd14728]
+vas   n=100 iters=10000 count=25622 sum=1.634984e0 [0x3fd14728]
+vif   n=100 iters=10000 count=33843 sum=1.634984e0 [0x3fd14728]
+vpv   n=100 iters=10000 count=22433 sum=1.634984e2 [0x43237f97]
+vtv   n=100 iters=10000 count=22887 sum=1.000000e2 [0x42c80000]
+vpvtv n=100 iters=10000 count=28341 sum=2.634984e2 [0x4383bfcb]
+vpvts n=100 iters=10000 count=24139 sum=2.634984e2 [0x4383bfcb]
+vpvpv n=100 iters=10000 count=28714 sum=1.634984e0 [0x3fd14728]
+vtvtv n=100 iters=10000 count=28718 sum=1.000000e2 [0x42c80000]
+vsumr n=100 iters=10000 count=16631 sum=5.187378e0 [0x40a5ff00]
+vdotr n=100 iters=10000 count=31996 sum=1.634984e0 [0x3fd14728]
+vbor  n=100 iters=10000 count=307699 sum=1.800443e2 [0x43340b57]
+TSVC_DONE
+=== TRACE BUFFER: 119 rows ===
+row   0 s0: pc=800126b4 fetch=44810849 alloc=44810852 complete=44810862 retire=44810863 faulted=0 cause=0
+row   0 s1: pc=800126b8 fetch=44810850 alloc=44810852 complete=44810861 retire=44810863 faulted=0 cause=0
+row   1 s0: pc=800126bc fetch=44810850 alloc=44810853 complete=44810863 retire=44810864 faulted=0 cause=0
+row   2 s0: pc=800126c0 fetch=44810851 alloc=44810853 complete=44810864 retire=44810865 faulted=0 cause=0
+row   3 s0: pc=800126c4 fetch=44810851 alloc=44810854 complete=44810865 retire=44810866 faulted=0 cause=0
+row   4 s0: pc=800126c8 fetch=44810852 alloc=44810855 complete=44810866 retire=44810867 faulted=0 cause=0
+row   5 s0: pc=800126cc fetch=44810852 alloc=44810856 complete=44810867 retire=44810868 faulted=0 cause=0
+row   6 s0: pc=800126d0 fetch=44810853 alloc=44810857 complete=44810868 retire=44810869 faulted=0 cause=0
+row   6 s1: pc=800126d4 fetch=44810853 alloc=44810858 complete=44810858 retire=44810869 faulted=0 cause=0
+row   7 s0: pc=800126d8 fetch=44810854 alloc=44810859 complete=44810869 retire=44810870 faulted=0 cause=0
+row   8 s0: pc=800126dc fetch=44810854 alloc=44810859 complete=44810870 retire=44810871 faulted=0 cause=0
+row   8 s1: pc=800126e0 fetch=44810855 alloc=44810860 complete=44810870 retire=44810871 faulted=0 cause=0
+row   9 s0: pc=800126e4 fetch=44810855 alloc=44810861 complete=44810872 retire=44810873 faulted=0 cause=0
+row   9 s1: pc=800126e8 fetch=44810856 alloc=44810861 complete=44810871 retire=44810873 faulted=0 cause=0
+row  10 s0: pc=800126d8 fetch=44810857 alloc=44810862 complete=44810873 retire=44810874 faulted=0 cause=0
+row  11 s0: pc=800126dc fetch=44810857 alloc=44810863 complete=44810874 retire=44810875 faulted=0 cause=0
+row  11 s1: pc=800126e0 fetch=44810858 alloc=44810864 complete=44810873 retire=44810875 faulted=0 cause=0
+row  12 s0: pc=800126e4 fetch=44810858 alloc=44810865 complete=44810875 retire=44810876 faulted=0 cause=0
+row  13 s0: pc=800126e8 fetch=44810859 alloc=44810865 complete=44810876 retire=44810877 faulted=0 cause=0
+row  14 s0: pc=800126ec fetch=44810859 alloc=44810866 complete=44810877 retire=44810878 faulted=0 cause=0
+row  15 s0: pc=800126f0 fetch=44810860 alloc=44810867 complete=44810878 retire=44810879 faulted=0 cause=0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+>>>>>>>> at cycle             44812038, taking fault for EPC ffffffff8001003c, cause  9, store 0, load 0, badaddr ffffffff800123a0, opcode  69, fault cnt          0
+row  16 s0: pc=800126f4 fetch=44810861 alloc=44810868 complete=44810879 retire=44810880 faulted=0 cause=0
+row  17 s0: pc=800126f8 fetch=44810861 alloc=44810869 complete=44810880 retire=44810881 faulted=0 cause=0
+row  18 s0: pc=800126fc fetch=44810862 alloc=44810870 complete=44810881 retire=44810882 faulted=0 cause=0
+row  19 s0: pc=80012700 fetch=44810863 alloc=44810871 complete=44810882 retire=44810883 faulted=0 cause=0
+row  20 s0: pc=80012704 fetch=44810863 alloc=44810872 complete=44810883 retire=44810884 faulted=0 cause=0
+row  21 s0: pc=80012708 fetch=44810864 alloc=44810873 complete=44810895 retire=44810896 faulted=0 cause=0
+row  22 s0: pc=8001270c fetch=44810865 alloc=44810874 complete=44810897 retire=44810898 faulted=0 cause=0
+row  22 s1: pc=80012710 fetch=44810866 alloc=44810874 complete=44810884 retire=44810898 faulted=0 cause=0
+row  23 s0: pc=80012714 fetch=44810867 alloc=44810875 complete=44810885 retire=44810899 faulted=0 cause=0
+row  23 s1: pc=80012718 fetch=44810868 alloc=44810876 complete=44810886 retire=44810899 faulted=0 cause=0
+row  24 s0: pc=80012700 fetch=44810869 alloc=44810877 complete=44810887 retire=44810900 faulted=0 cause=0
+row  24 s1: pc=80012704 fetch=44810869 alloc=44810878 complete=44810888 retire=44810900 faulted=0 cause=0
+row  25 s0: pc=80012708 fetch=44810870 alloc=44810879 complete=44810897 retire=44810901 faulted=0 cause=0
+row  26 s0: pc=8001270c fetch=44810871 alloc=44810880 complete=44810899 retire=44810902 faulted=0 cause=0
+row  26 s1: pc=80012710 fetch=44810872 alloc=44810880 complete=44810890 retire=44810902 faulted=0 cause=0
+row  27 s0: pc=80012714 fetch=44810873 alloc=44810881 complete=44810891 retire=44810903 faulted=0 cause=0
+row  27 s1: pc=80012718 fetch=44810874 alloc=44810882 complete=44810892 retire=44810903 faulted=0 cause=0
+row  28 s0: pc=80012700 fetch=44810875 alloc=44810883 complete=44810893 retire=44810904 faulted=0 cause=0
+row  28 s1: pc=80012704 fetch=44810876 alloc=44810884 complete=44810894 retire=44810904 faulted=0 cause=0
+row  29 s0: pc=80012708 fetch=44810876 alloc=44810885 complete=44810898 retire=44810905 faulted=0 cause=0
+row  30 s0: pc=8001270c fetch=44810877 alloc=44810886 complete=44810900 retire=44810906 faulted=0 cause=0
+row  30 s1: pc=80012710 fetch=44810878 alloc=44810886 complete=44810896 retire=44810906 faulted=0 cause=0
+row  31 s0: pc=80012714 fetch=44810879 alloc=44810887 complete=44810898 retire=44810907 faulted=0 cause=0
+row  31 s1: pc=80012718 fetch=44810880 alloc=44810888 complete=44810901 retire=44810907 faulted=0 cause=0
+row  32 s0: pc=80012700 fetch=44810881 alloc=44810889 complete=44810902 retire=44810908 faulted=0 cause=0
+row  32 s1: pc=80012704 fetch=44810882 alloc=44810890 complete=44810903 retire=44810908 faulted=0 cause=0
+row  33 s0: pc=80012708 fetch=44810882 alloc=44810891 complete=44810905 retire=44810909 faulted=0 cause=0
+row  34 s0: pc=8001270c fetch=44810883 alloc=44810892 complete=44810907 retire=44810910 faulted=0 cause=0
+row  34 s1: pc=80012710 fetch=44810884 alloc=44810892 complete=44810904 retire=44810910 faulted=0 cause=0
+row  35 s0: pc=80012714 fetch=44810885 alloc=44810893 complete=44810905 retire=44810911 faulted=0 cause=0
+row  35 s1: pc=80012718 fetch=44810886 alloc=44810894 complete=44810906 retire=44810911 faulted=0 cause=0
+row  36 s0: pc=80012700 fetch=44810887 alloc=44810895 complete=44810908 retire=44810912 faulted=0 cause=0
+row  36 s1: pc=80012704 fetch=44810888 alloc=44810896 complete=44810909 retire=44810912 faulted=0 cause=0
+row  37 s0: pc=80012708 fetch=44810888 alloc=44810897 complete=44810911 retire=44810913 faulted=0 cause=0
+row  38 s0: pc=8001270c fetch=44810889 alloc=44810898 complete=44810913 retire=44810914 faulted=0 cause=0
+row  38 s1: pc=80012710 fetch=44810890 alloc=44810898 complete=44810910 retire=44810914 faulted=0 cause=0
+row  39 s0: pc=80012714 fetch=44810891 alloc=44810899 complete=44810911 retire=44810915 faulted=0 cause=0
+row  39 s1: pc=80012718 fetch=44810892 alloc=44810900 complete=44810912 retire=44810915 faulted=0 cause=0
+row  40 s0: pc=80012700 fetch=44810893 alloc=44810901 complete=44810914 retire=44810916 faulted=0 cause=0
+row  40 s1: pc=80012704 fetch=44810894 alloc=44810902 complete=44810915 retire=44810916 faulted=0 cause=0
+row  41 s0: pc=80012708 fetch=44810894 alloc=44810903 complete=44810917 retire=44810918 faulted=0 cause=0
+row  42 s0: pc=8001270c fetch=44810895 alloc=44810904 complete=44810919 retire=44810920 faulted=0 cause=0
+row  42 s1: pc=80012710 fetch=44810896 alloc=44810904 complete=44810916 retire=44810920 faulted=0 cause=0
+row  43 s0: pc=80012714 fetch=44810897 alloc=44810905 complete=44810917 retire=44810921 faulted=0 cause=0
+row  43 s1: pc=80012718 fetch=44810898 alloc=44810906 complete=44810918 retire=44810921 faulted=0 cause=0
+row  44 s0: pc=80012700 fetch=44810899 alloc=44810907 complete=44810920 retire=44810922 faulted=0 cause=0
+row  44 s1: pc=80012704 fetch=44810900 alloc=44810908 complete=44810921 retire=44810922 faulted=0 cause=0
+row  45 s0: pc=80012708 fetch=44810900 alloc=44810909 complete=44810923 retire=44810924 faulted=0 cause=0
+row  46 s0: pc=8001270c fetch=44810901 alloc=44810910 complete=44810925 retire=44810926 faulted=0 cause=0
+row  46 s1: pc=80012710 fetch=44810902 alloc=44810910 complete=44810922 retire=44810926 faulted=0 cause=0
+row  47 s0: pc=80012714 fetch=44810903 alloc=44810911 complete=44810923 retire=44810927 faulted=0 cause=0
+row  47 s1: pc=80012718 fetch=44810904 alloc=44810912 complete=44810924 retire=44810927 faulted=0 cause=0
+row  48 s0: pc=80012700 fetch=44810905 alloc=44810913 complete=44810926 retire=44810928 faulted=0 cause=0
+row  48 s1: pc=80012704 fetch=44810906 alloc=44810914 complete=44810927 retire=44810928 faulted=0 cause=0
+row  49 s0: pc=80012708 fetch=44810906 alloc=44810915 complete=44810929 retire=44810930 faulted=0 cause=0
+row  50 s0: pc=8001270c fetch=44810907 alloc=44810916 complete=44810931 retire=44810932 faulted=0 cause=0
+row  50 s1: pc=80012710 fetch=44810908 alloc=44810916 complete=44810928 retire=44810932 faulted=0 cause=0
+row  51 s0: pc=80012714 fetch=44810909 alloc=44810917 complete=44810929 retire=44810933 faulted=0 cause=0
+row  51 s1: pc=80012718 fetch=44810910 alloc=44810918 complete=44810930 retire=44810933 faulted=0 cause=0
+row  52 s0: pc=8001271c fetch=44810911 alloc=44810919 complete=44810932 retire=44810934 faulted=0 cause=0
+row  53 s0: pc=80012720 fetch=44810912 alloc=44810920 complete=44810933 retire=44810935 faulted=0 cause=0
+row  54 s0: pc=80012724 fetch=44810913 alloc=44810921 complete=44810934 retire=44810936 faulted=0 cause=0
+row  54 s1: pc=80012728 fetch=44810914 alloc=44810922 complete=44810935 retire=44810936 faulted=0 cause=0
+row  55 s0: pc=80012b04 fetch=44810915 alloc=44810923 complete=44810936 retire=44810937 faulted=0 cause=0
+row  56 s0: pc=80012b08 fetch=44810915 alloc=44810924 complete=44810937 retire=44810938 faulted=0 cause=0
+row  56 s1: pc=80012b0c fetch=44810916 alloc=44810925 complete=44810937 retire=44810938 faulted=0 cause=0
+row  57 s0: pc=80012b10 fetch=44810917 alloc=44810926 complete=44810939 retire=44810940 faulted=0 cause=0
+row  57 s1: pc=80012b14 fetch=44810918 alloc=44810926 complete=44810938 retire=44810940 faulted=0 cause=0
+row  58 s0: pc=8003cd74 fetch=44810919 alloc=44810927 complete=44810940 retire=44810941 faulted=0 cause=0
+row  59 s0: pc=8003cd78 fetch=44810919 alloc=44810928 complete=44810941 retire=44810942 faulted=0 cause=0
+row  60 s0: pc=8003cd7c fetch=44810920 alloc=44810928 complete=44810942 retire=44810943 faulted=0 cause=0
+row  61 s0: pc=8003cd80 fetch=44810969 alloc=44810971 complete=44810976 retire=44810977 faulted=0 cause=0
+row  62 s0: pc=8003cd84 fetch=44810970 alloc=44810972 complete=44810976 retire=44810978 faulted=0 cause=0
+row  63 s0: pc=8003cd88 fetch=44810971 alloc=44810973 complete=44810977 retire=44810979 faulted=0 cause=0
+row  64 s0: pc=80012280 fetch=44811029 alloc=44811031 complete=44811051 retire=44811052 faulted=0 cause=0
+row  64 s1: pc=80012284 fetch=44811029 alloc=44811031 complete=44811035 retire=44811052 faulted=0 cause=0
+row  65 s0: pc=80012288 fetch=44811030 alloc=44811032 complete=44811036 retire=44811053 faulted=0 cause=0
+row  65 s1: pc=8001228c fetch=44811031 alloc=44811033 complete=44811037 retire=44811053 faulted=0 cause=0
+row  66 s0: pc=800123a0 fetch=44811039 alloc=44811041 complete=44811045 retire=44811054 faulted=0 cause=0
+row  67 s0: pc=800123a4 fetch=44811040 alloc=44811042 complete=44811062 retire=44811063 faulted=0 cause=0
+row  68 s0: pc=800123b4 fetch=44811048 alloc=44811050 complete=44811064 retire=44811065 faulted=0 cause=0
+row  68 s1: pc=800123b8 fetch=44811049 alloc=44811051 complete=44811055 retire=44811065 faulted=0 cause=0
+row  69 s0: pc=800123a8 fetch=44811050 alloc=44811052 complete=44811065 retire=44811066 faulted=0 cause=0
+row  70 s0: pc=800123ac fetch=44811050 alloc=44811052 complete=44811066 retire=44811067 faulted=0 cause=0
+row  70 s1: pc=800123b0 fetch=44811051 alloc=44811053 complete=44811063 retire=44811067 faulted=0 cause=0
+row  71 s0: pc=800123b4 fetch=44811051 alloc=44811053 complete=44811067 retire=44811068 faulted=0 cause=0
+row  71 s1: pc=800123b8 fetch=44811052 alloc=44811054 complete=44811059 retire=44811068 faulted=0 cause=0
+row  72 s0: pc=800123a8 fetch=44811053 alloc=44811055 complete=44811068 retire=44811069 faulted=0 cause=0
+row  73 s0: pc=800123ac fetch=44811053 alloc=44811055 complete=44811069 retire=44811070 faulted=0 cause=0
+row  73 s1: pc=800123b0 fetch=44811054 alloc=44811056 complete=44811064 retire=44811070 faulted=0 cause=0
+row  74 s0: pc=800123b4 fetch=44811054 alloc=44811056 complete=44811070 retire=44811071 faulted=0 cause=0
+row  74 s1: pc=800123b8 fetch=44811055 alloc=44811057 complete=44811063 retire=44811071 faulted=0 cause=0
+row  75 s0: pc=800123a8 fetch=44811056 alloc=44811058 complete=44811071 retire=44811072 faulted=0 cause=0
+row  76 s0: pc=800123ac fetch=44811056 alloc=44811058 complete=44811072 retire=44811073 faulted=0 cause=0
+row  76 s1: pc=800123b0 fetch=44811057 alloc=44811059 complete=44811065 retire=44811073 faulted=0 cause=0
+row  77 s0: pc=800123b4 fetch=44811057 alloc=44811059 complete=44811073 retire=44811074 faulted=0 cause=0
+row  78 s0: pc=800123b8 fetch=44811058 alloc=44811060 complete=44811074 retire=44811075 faulted=0 cause=0
+row  79 s0: pc=800123a8 fetch=44811059 alloc=44811061 complete=44811075 retire=44811076 faulted=0 cause=0
+row  80 s0: pc=800123ac fetch=44811059 alloc=44811061 complete=44811076 retire=44811077 faulted=0 cause=0
+row  80 s1: pc=800123b0 fetch=44811060 alloc=44811062 complete=44811076 retire=44811077 faulted=0 cause=0
+row  81 s0: pc=800123b4 fetch=44811060 alloc=44811062 complete=44811078 retire=44811079 faulted=0 cause=0
+row  81 s1: pc=800123b8 fetch=44811061 alloc=44811063 complete=44811077 retire=44811079 faulted=0 cause=0
+row  82 s0: pc=800123a8 fetch=44811062 alloc=44811064 complete=44811079 retire=44811080 faulted=0 cause=0
+row  83 s0: pc=800123ac fetch=44811062 alloc=44811064 complete=44811080 retire=44811081 faulted=0 cause=0
+row  83 s1: pc=800123b0 fetch=44811063 alloc=44811065 complete=44811079 retire=44811081 faulted=0 cause=0
+row  84 s0: pc=800123b4 fetch=44811063 alloc=44811066 complete=44811081 retire=44811082 faulted=0 cause=0
+row  85 s0: pc=800123b8 fetch=44811064 alloc=44811066 complete=44811082 retire=44811083 faulted=0 cause=0
+row  86 s0: pc=800123a8 fetch=44811065 alloc=44811067 complete=44811083 retire=44811084 faulted=0 cause=0
+row  87 s0: pc=800123ac fetch=44811065 alloc=44811068 complete=44811084 retire=44811085 faulted=0 cause=0
+row  87 s1: pc=800123b0 fetch=44811066 alloc=44811069 complete=44811084 retire=44811085 faulted=0 cause=0
+row  88 s0: pc=800123b4 fetch=44811066 alloc=44811070 complete=44811086 retire=44811087 faulted=0 cause=0
+row  88 s1: pc=800123b8 fetch=44811067 alloc=44811070 complete=44811085 retire=44811087 faulted=0 cause=0
+row  89 s0: pc=800123a8 fetch=44811068 alloc=44811071 complete=44811087 retire=44811088 faulted=0 cause=0
+row  90 s0: pc=800123ac fetch=44811068 alloc=44811072 complete=44811088 retire=44811089 faulted=0 cause=0
+row  90 s1: pc=800123b0 fetch=44811069 alloc=44811073 complete=44811087 retire=44811089 faulted=0 cause=0
+row  91 s0: pc=800123b4 fetch=44811069 alloc=44811074 complete=44811089 retire=44811090 faulted=0 cause=0
+row  92 s0: pc=800123b8 fetch=44811070 alloc=44811074 complete=44811090 retire=44811091 faulted=0 cause=0
+row  93 s0: pc=800123a8 fetch=44811071 alloc=44811075 complete=44811091 retire=44811092 faulted=0 cause=0
+row  94 s0: pc=800123ac fetch=44811071 alloc=44811076 complete=44811092 retire=44811093 faulted=0 cause=0
+row  95 s0: pc=800123b0 fetch=44811072 alloc=44811077 complete=44811143 retire=44811144 faulted=0 cause=0
+row  96 s0: pc=800123b4 fetch=44811072 alloc=44811078 complete=44811145 retire=44811146 faulted=0 cause=0
+row  96 s1: pc=800123b8 fetch=44811073 alloc=44811078 complete=44811093 retire=44811146 faulted=0 cause=0
+row  97 s0: pc=800123a8 fetch=44811074 alloc=44811079 complete=44811146 retire=44811147 faulted=0 cause=0
+row  98 s0: pc=800123ac fetch=44811074 alloc=44811080 complete=44811147 retire=44811148 faulted=0 cause=0
+row  98 s1: pc=800123b0 fetch=44811075 alloc=44811081 complete=44811145 retire=44811148 faulted=0 cause=0
+row  99 s0: pc=800123b4 fetch=44811075 alloc=44811082 complete=44811148 retire=44811149 faulted=0 cause=0
+row  99 s1: pc=800123b8 fetch=44811076 alloc=44811082 complete=44811094 retire=44811149 faulted=0 cause=0
+row 100 s0: pc=800123a8 fetch=44811077 alloc=44811083 complete=44811149 retire=44811150 faulted=0 cause=0
+row 101 s0: pc=800123ac fetch=44811077 alloc=44811084 complete=44811150 retire=44811151 faulted=0 cause=0
+row 101 s1: pc=800123b0 fetch=44811078 alloc=44811085 complete=44811146 retire=44811151 faulted=0 cause=0
+row 102 s0: pc=800123b4 fetch=44811078 alloc=44811086 complete=44811151 retire=44811152 faulted=0 cause=0
+row 103 s0: pc=800123b8 fetch=44811079 alloc=44811086 complete=44811096 retire=44811153 faulted=0 cause=0
+row 104 s0: pc=800123bc fetch=44811155 alloc=44811158 complete=44811162 retire=44811163 faulted=0 cause=0
+row 105 s0: pc=800123c0 fetch=44811163 alloc=44811165 complete=44811165 retire=44811166 faulted=0 cause=0
+row 106 s0: pc=80012290 fetch=44811212 alloc=44811214 complete=44811436 retire=44811437 faulted=0 cause=0
+row 107 s0: pc=80012294 fetch=44811212 alloc=44811214 complete=44811438 retire=44811439 faulted=0 cause=0
+row 108 s0: pc=80012298 fetch=44811213 alloc=44811215 complete=44811611 retire=44811612 faulted=0 cause=0
+row 109 s0: pc=8001229c fetch=44811213 alloc=44811215 complete=44811613 retire=44811614 faulted=0 cause=0
+row 110 s0: pc=800122a0 fetch=44811262 alloc=44811264 complete=44811743 retire=44811744 faulted=0 cause=0
+row 111 s0: pc=800122a4 fetch=44811262 alloc=44811264 complete=44811745 retire=44811746 faulted=0 cause=0
+row 112 s0: pc=800122a8 fetch=44811263 alloc=44811265 complete=44811754 retire=44811755 faulted=0 cause=0
+row 113 s0: pc=800122ac fetch=44811263 alloc=44811265 complete=44811756 retire=44811757 faulted=0 cause=0
+row 114 s0: pc=800122b0 fetch=44811312 alloc=44811314 complete=44811886 retire=44811887 faulted=0 cause=0
+row 115 s0: pc=800122b4 fetch=44811312 alloc=44811314 complete=44811888 retire=44811889 faulted=0 cause=0
+row 116 s0: pc=800122b8 fetch=44811313 alloc=44811315 complete=44812018 retire=44812019 faulted=0 cause=0
+row 116 s1: pc=800122bc fetch=44811313 alloc=44811315 complete=44811319 retire=44812019 faulted=0 cause=0
+row 117 s0: pc=800122c0 fetch=44811483 alloc=44811485 complete=44811489 retire=44812020 faulted=0 cause=0
+row 118 s0: pc=800122c4 fetch=44811484 alloc=44811486 complete=44811490 retire=44812021 faulted=0 cause=0
+[PRESCHK] scans: L1D lines checked 2785865, tracking mismatches 0, not-in-L2 (inclusion) 0, not-in-L2 behind an own in-flight fill 0, duplicate copies 0
+[BISTAT] reason            probes   l1d_hit     dirty
+[BISTAT] evict_l1i_miss      1787       164       121
+[BISTAT] evict_l1d_miss      8441      1011         0
+[BISTAT] alias_fill             0         0         0
+[BISTAT] alias_invl             0         0         0
+[BISTAT] alias_pgdrop           0         0         0
+[BISTAT] snoop_wbinv            0         0         0
+[BISTAT] snoop_drop             0         0         0
+[PROBE] L1D probes 10228, hit 1175, dirty 121
+tip cycles  = 4.47792e+07
+total_retire = 20620516
+total_cycle  = 44812021
+total ipc    = 0.460156
+[ctr] l1d acc=9678375 hit=4206211 (43.4599%)
+[ctr] l1i acc=21031531 hit=21003594
+[ctr] l2  acc=619081 hit=578602
+simulation took 146.537 seconds, 140719 insns per second
+wall=146.74 s

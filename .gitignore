@@ -1,0 +1,8 @@
+*.elf
+harness/*.o
+harness/obj/*.fix.o
+harness/tsvc_driver.c
+harness/one_*_driver.c
+harness/tsvc.map
+tools/findpc
+tools/dumprec
