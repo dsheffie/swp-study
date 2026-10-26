@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>s241: LSU-clog win</title>
-<meta name="description" content="TSVC s241 on r9999: SWP is 1.56x faster because its schedule keeps stores from clogging the 8-entry LSU.">
+<title>s241: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s241 (node splitting) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
 <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 <main class="wide">
-<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a></div>
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s235.html">s235</a> · next: <a href="s242.html">s242</a></div>
 <h1>s241: SWP wins by not clogging the LSU</h1>
 <p class="lede">SWP is 1.56× faster with the same instruction count and the same mispredicts: a real scheduling win, though not
 for the reason MIPSpro scheduled it.</p>
@@ -21,28 +21,43 @@ for the reason MIPSpro scheduled it.</p>
   <tr><td>instructions</td><td class="r">113,033</td><td class="r">113,231</td></tr>
   <tr><td>IPC</td><td class="r">0.789</td><td class="r good">1.244</td></tr>
   <tr><td>mispredicts in the kernel</td><td class="r">10</td><td class="r">9</td></tr>
-  <tr><td>steady state, cycles per element</td><td class="r">≈17.5</td><td class="r good">≈10</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">12.5</td></tr>
 </table>
 </div>
 
 <h2>The kernel</h2>
-<pre>do 10 i = 1,n-1
-   a(i) = b(i) * c(i)   * d(i)
-   b(i) = a(i) * a(i+1) * d(i)
-10 continue</pre>
-<p>MIPSpro's SWP notes. The schedule is bound by the R4000's FP multiplier (8 multiplies per 2 iterations):</p>
-<pre>#&lt;swps&gt;    50 estimated iterations before pipelining
+<p>node splitting / preloading necessary to allow vectorization</p>
+<pre>      do 1 nl = 1,ntimes
+      do 10 i = 1,n-1
+         a(i) = b(i) * c(i)   * d(i)
+         b(i) = a(i) * a(i+1) * d(i)
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 1137 steady state
+#&lt;swps&gt;    50 estimated iterations before pipelining
 #&lt;swps&gt;     2 unrollings before pipelining
 #&lt;swps&gt;    25 cycles per 2 iterations
+#&lt;swps&gt;     8 flops        ( 32% of peak)
 #&lt;swps&gt;     8 fmuls        (114% of peak)
+#&lt;swps&gt;     0 fadds        (  0% of peak)
 #&lt;swps&gt;    12 mem refs     ( 48% of peak)
+#&lt;swps&gt;     5 integer ops  ( 20% of peak)
+#&lt;swps&gt;    25 instructions (100% of peak)
+#&lt;swps&gt;     2 short trip threshold
+#&lt;swps&gt;     6 integer registers used.
+#&lt;swps&gt;    15 float registers used.
 #&lt;swps&gt;    24 min cycles required for resources
 #&lt;swps&gt;    25 cycles in minimum schedule found</pre>
 
-<h2>The two loops</h2>
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
 <div class="pair">
 <div>
-<h3>No SWP: 4× unrolled; loads, then multiplies, then all 8 stores</h3>
+<h3>No SWP</h3>
+<p><code>8001aeac</code>–<code>8001af5c</code>, 2300 trips.</p>
 <pre>8001aeac  lwc1 $f12,8(a2)
 8001aeb0  lwc1 $f11,8(a0)
 8001aeb4  lwc1 $f9,0(a2)
@@ -90,7 +105,8 @@ for the reason MIPSpro scheduled it.</p>
 8001af5c  swc1 $f3,-20(a0)</pre>
 </div>
 <div>
-<h3>SWP: two replications; stores of the previous stage interleaved throughout</h3>
+<h3>SWP</h3>
+<p><code>800220dc</code>–<code>80022190</code>, 2300 trips.</p>
 <pre>800220dc  mul.s $f0,$f13,$f3
 800220e0  lwc1 $f2,20(a1)
 800220e4  lwc1 $f12,12(a0)
@@ -135,7 +151,8 @@ for the reason MIPSpro scheduled it.</p>
 80022180  lwc1 $f10,16(a0)
 80022184  lwc1 $f5,20(v0)
 80022188  mul.s $f1,$f2,$f0
-8002218c  bne a0,a2,800220dc &lt;s241_+0x28c&gt;</pre>
+8002218c  bne a0,a2,800220dc &lt;s241_+0x28c&gt;
+80022190  swc1 $f9,-4(v0)</pre>
 </div>
 </div>
 
@@ -162,18 +179,17 @@ Here SWP's ordering happens to avoid it. Freeing the slot when the store moves t
 this gain.</p></div>
 
 <h2>Pipetraces</h2>
-<p>Two steady-state loop trips of each version (F fetch, A allocate, C complete, R retire; grey = memory-pipe events,
-with S also marking ALU issue). Scroll inside each frame.</p>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
 <div class="trace">
-  <div class="bar"><h3>SWP: 2 trips, 8 elements</h3><span><a href="../pipetraces/s241_swp_focus.html">open</a> · <a href="../pipetraces/s241_swp.html">420-instruction window</a></span></div>
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s241_swp_focus.html">open</a> · <a href="../pipetraces/s241_swp.html">420-instruction window</a></span></div>
   <iframe src="../pipetraces/s241_swp_focus.html" title="s241 SWP pipetrace" loading="lazy"></iframe>
 </div>
 <div class="trace">
-  <div class="bar"><h3>No SWP: 2 trips, 8 elements</h3><span><a href="../pipetraces/s241_noswp_focus.html">open</a> · <a href="../pipetraces/s241_noswp.html">420-instruction window</a></span></div>
-  <iframe src="../pipetraces/s241_noswp_focus.html" title="s241 no-SWP pipetrace" loading="lazy"></iframe>
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s241_noswp_focus.html">open</a> · <a href="../pipetraces/s241_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s241_noswp_focus.html" title="s241 No SWP pipetrace" loading="lazy"></iframe>
 </div>
-
-<footer><a href="../index.html">← all kernels</a> · previous: <a href="vas.html">vas</a></footer>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s235.html">s235</a> · next: <a href="s242.html">s242</a></footer>
 </main>
 </body>
 </html>

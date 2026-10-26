@@ -1,0 +1,73 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>r9999 pipeline trace</title>
+<style>
+ :root{--bg:#12141a;--fg:#e6e8ee;--dim:#8b93a7;--grid:#232734;
+       --F:#4c8dff;--A:#c678dd;--C:#e5c07b;--R:#57c98a;--M:#7f8aa3;--accent:#57c98a}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);
+      font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+ header{padding:14px 18px;border-bottom:1px solid var(--grid);
+        display:flex;gap:22px;align-items:baseline;flex-wrap:wrap}
+ h1{font-size:15px;margin:0;letter-spacing:.02em}
+ .legend{color:var(--dim);display:flex;gap:14px;flex-wrap:wrap}
+ .k{display:inline-flex;gap:5px;align-items:center}
+ .sw{width:11px;height:11px;border-radius:2px;display:inline-block}
+ #wrap{overflow:auto;max-height:calc(100vh - 62px)}
+ table{border-collapse:collapse;white-space:nowrap}
+ th{position:sticky;top:0;background:var(--bg);color:var(--dim);
+    font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--grid)}
+ td{padding:0 2px;height:19px}
+ td.insn{position:sticky;left:0;background:var(--bg);padding-right:14px;
+         border-right:1px solid var(--grid);color:var(--fg)}
+ td.insn .pc{color:var(--dim);margin-right:8px}
+ .cell{display:block;width:13px;text-align:center;border-radius:2px;
+       font-size:11px;font-weight:600;color:#12141a;background:var(--M)}
+ .Fc{background:var(--F)} .Ac{background:var(--A)}
+ .Cc{background:var(--C)} .Rc{background:var(--R)}
+ .span{background:var(--grid);display:block;height:3px;margin-top:8px}
+</style></head><body>
+<header>
+  <h1>r9999 &mdash; pipeline trace</h1>
+  <div class="legend">
+    <span class="k"><i class="sw" style="background:var(--F)"></i>Fetch</span>
+    <span class="k"><i class="sw" style="background:var(--A)"></i>Alloc</span>
+    <span class="k"><i class="sw" style="background:var(--C)"></i>Complete</span>
+    <span class="k"><i class="sw" style="background:var(--R)"></i>Retire</span>
+    <span class="k"><i class="sw" style="background:var(--M)"></i>Memory pipe (Q LSU entry, S issue, H hit, Z store data, K wake, ...)</span>
+    <span id="stats"></span>
+  </div>
+</header>
+<div id="wrap"></div>
+<script>
+var tableData = [{"str":"ffffffff80034838 lwc1 $f0, -4($a1)",uops:[{"uuid":"84039","events":{"115018":"F","115021":"A","115023":"Q","115024":"S","115026":"H","115027":"C","115037":"R"}}]},{"str":"ffffffff8003483c c.lt.s $f0, $f30",uops:[{"uuid":"84040","events":{"115018":"F","115022":"A","115035":"C","115038":"R"}}]},{"str":"ffffffff80034840 nop ",uops:[{"uuid":"84041","events":{"115019":"F","115022":"A","115022":"C","115038":"R"}}]},{"str":"ffffffff80034844 bc1t 0x80034988",uops:[{"uuid":"84042","events":{"115019":"F","115023":"A","115035":"S","115036":"C","115039":"R"}}]},{"str":"ffffffff80034848 addiu $a1, $a1, 4",uops:[{"uuid":"84043","events":{"115020":"F","115023":"A","115027":"S","115028":"C","115039":"R"}}]},{"str":"ffffffff8003484c lwc1 $f3, -4($t0)",uops:[{"uuid":"84044","events":{"115020":"F","115024":"A","115025":"Q","115026":"S","115028":"H","115029":"C","115040":"R"}}]},{"str":"ffffffff80034850 lwc1 $f2, -4($a2)",uops:[{"uuid":"84045","events":{"115021":"F","115025":"A","115026":"Q","115027":"S","115029":"H","115030":"C","115040":"R"}}]},{"str":"ffffffff80034854 mul.s $f2, $f2, $f3",uops:[{"uuid":"84046","events":{"115021":"F","115026":"A","115037":"C","115041":"R"}}]},{"str":"ffffffff80034858 lwc1 $f1, -4($a3)",uops:[{"uuid":"84047","events":{"115022":"F","115027":"A","115028":"Q","115029":"S","115031":"H","115032":"C","115041":"R"}}]},{"str":"ffffffff8003485c addiu $a3, $a3, 4",uops:[{"uuid":"84048","events":{"115022":"F","115027":"A","115030":"S","115031":"C","115042":"R"}}]},{"str":"ffffffff80034860 add.s $f1, $f1, $f2",uops:[{"uuid":"84049","events":{"115023":"F","115028":"A","115043":"C","115044":"R"}}]},{"str":"ffffffff80034864 addiu $a2, $a2, 4",uops:[{"uuid":"84050","events":{"115023":"F","115028":"A","115031":"S","115032":"C","115044":"R"}}]},{"str":"ffffffff80034868 addiu $t0, $t0, 4",uops:[{"uuid":"84051","events":{"115024":"F","115029":"A","115032":"S","115033":"C","115045":"R"}}]},{"str":"ffffffff8003486c bne $a1, $t1, 0x80034838",uops:[{"uuid":"84052","events":{"115024":"F","115029":"A","115033":"S","115034":"C","115045":"R"}}]},{"str":"ffffffff80034870 swc1 $f1, -8($a3)",uops:[{"uuid":"84053","events":{"115025":"F","115030":"A","115031":"Q","115032":"S","115044":"Z","115035":"C","115046":"R"}}]},{"str":"ffffffff80034838 lwc1 $f0, -4($a1)",uops:[{"uuid":"84054","events":{"115026":"F","115030":"A","115032":"Q","115033":"S","115035":"H","115036":"C","115046":"R"}}]},{"str":"ffffffff8003483c c.lt.s $f0, $f30",uops:[{"uuid":"84055","events":{"115026":"F","115031":"A","115044":"C","115047":"R"}}]},{"str":"ffffffff80034840 nop ",uops:[{"uuid":"84056","events":{"115027":"F","115031":"A","115031":"C","115047":"R"}}]},{"str":"ffffffff80034844 bc1t 0x80034988",uops:[{"uuid":"84057","events":{"115027":"F","115032":"A","115044":"S","115045":"C","115048":"R"}}]},{"str":"ffffffff80034848 addiu $a1, $a1, 4",uops:[{"uuid":"84058","events":{"115028":"F","115032":"A","115036":"S","115037":"C","115048":"R"}}]},{"str":"ffffffff8003484c lwc1 $f3, -4($t0)",uops:[{"uuid":"84059","events":{"115029":"F","115033":"A","115034":"Q","115035":"S","115037":"H","115038":"C","115049":"R"}}]},{"str":"ffffffff80034850 lwc1 $f2, -4($a2)",uops:[{"uuid":"84060","events":{"115030":"F","115034":"A","115035":"Q","115036":"S","115038":"H","115039":"C","115049":"R"}}]},{"str":"ffffffff80034854 mul.s $f2, $f2, $f3",uops:[{"uuid":"84061","events":{"115030":"F","115035":"A","115046":"C","115050":"R"}}]},{"str":"ffffffff80034858 lwc1 $f1, -4($a3)",uops:[{"uuid":"84062","events":{"115031":"F","115036":"A","115037":"Q","115038":"S","115040":"H","115041":"C","115050":"R"}}]},{"str":"ffffffff8003485c addiu $a3, $a3, 4",uops:[{"uuid":"84063","events":{"115031":"F","115036":"A","115039":"S","115040":"C","115051":"R"}}]},{"str":"ffffffff80034860 add.s $f1, $f1, $f2",uops:[{"uuid":"84064","events":{"115032":"F","115037":"A","115052":"C","115053":"R"}}]},{"str":"ffffffff80034864 addiu $a2, $a2, 4",uops:[{"uuid":"84065","events":{"115032":"F","115037":"A","115040":"S","115041":"C","115053":"R"}}]},{"str":"ffffffff80034868 addiu $t0, $t0, 4",uops:[{"uuid":"84066","events":{"115033":"F","115038":"A","115041":"S","115042":"C","115054":"R"}}]},{"str":"ffffffff8003486c bne $a1, $t1, 0x80034838",uops:[{"uuid":"84067","events":{"115033":"F","115038":"A","115042":"S","115043":"C","115054":"R"}}]},{"str":"ffffffff80034870 swc1 $f1, -8($a3)",uops:[{"uuid":"84068","events":{"115034":"F","115039":"A","115040":"Q","115041":"S","115053":"Z","115044":"C","115055":"R"}}]},{"str":"ffffffff80034838 lwc1 $f0, -4($a1)",uops:[{"uuid":"84069","events":{"115035":"F","115039":"A","115041":"Q","115042":"S","115044":"H","115045":"C","115055":"R"}}]}]
+;(function(){
+  var rows=[],minC=Infinity,maxC=-Infinity;
+  tableData.forEach(function(rec){
+    var u=rec.uops[0], ev=u.events, o={str:rec.str,uuid:u.uuid,ev:{}};
+    for(var c in ev){var n=+c; o.ev[n]=ev[c]; if(n<minC)minC=n; if(n>maxC)maxC=n;}
+    rows.push(o);
+  });
+  if(!rows.length){document.getElementById('wrap').textContent='no records';return;}
+  var span=maxC-minC+1;
+  if(span>4000){maxC=minC+4000;span=4001;}   /* keep the DOM sane */
+  document.getElementById('stats').textContent=
+     rows.length+' insns · cycles '+minC+'–'+maxC+' ('+span+')';
+  var h='<table><thead><tr><th>instruction</th>';
+  for(var c=minC;c<=maxC;c++) h+='<th>'+((c-minC)%10===0?(c-minC):'')+'</th>';
+  h+='</tr></thead><tbody>';
+  rows.forEach(function(r){
+    var parts=r.str.split(' '), pc=parts.shift();
+    h+='<tr><td class="insn"><span class="pc">'+pc.slice(-8)+'</span>'+parts.join(' ')+'</td>';
+    var f=null,l=null;
+    for(var c in r.ev){var n=+c; if(f===null||n<f)f=n; if(l===null||n>l)l=n;}
+    for(var c=minC;c<=maxC;c++){
+      var e=r.ev[c];
+      if(e) h+='<td><span class="cell '+e+'c">'+e+'</span></td>';
+      else if(c>f&&c<l) h+='<td><span class="span"></span></td>';
+      else h+='<td></td>';
+    }
+    h+='</tr>';
+  });
+  document.getElementById('wrap').innerHTML=h+'</tbody></table>';
+})();
+</script></body></html>

@@ -6,3 +6,6 @@ harness/one_*_driver.c
 harness/tsvc.map
 tools/findpc
 tools/dumprec
+harness/one_*
+tools/hotloop
+__pycache__/

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s341: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s341 (packing) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s332.html">s332</a> · next: <a href="s342.html">s342</a></div>
+<h1>s341</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">149,362</td><td class="r ">150,636</td></tr>
+  <tr><td>instructions</td><td class="r">67,528</td><td class="r">67,528</td></tr>
+  <tr><td>IPC</td><td class="r">0.452</td><td class="r ">0.448</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">5,105</td><td class="r">5,105</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">2</td><td class="r">2</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">—</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>packing / pack positive values</p>
+<pre>      do 1 nl = 1,ntimes
+      j = 0
+      do 10 i = 1,n
+         if(b(i) .gt. 0.)then
+            j    = j + 1
+            a(j) = b(i)
+         endif
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swpf&gt; Loop line 2442 wasn&#x27;t pipelined because:
+#&lt;swpf&gt;       instructions added exceeds -CG:body_ifc_ratio</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>80024d18</code>–<code>80024d58</code>, 5000 trips.</p>
+<pre>80024d18  lwc1 $f5,0(a0)
+80024d1c  c.lt.s $f30,$f5
+80024d20  nop
+80024d24  bc1f 80024d34 &lt;s341_+0x198&gt;
+80024d28  addiu a0,a0,8
+80024d2c  swc1 $f5,0(a1)
+80024d30  addiu a1,a1,4
+80024d34  beq a0,a2,80024c8c &lt;s341_+0xf0&gt;
+80024d38  nop
+80024d3c  lwc1 $f5,-4(a0)
+80024d40  c.lt.s $f30,$f5
+80024d44  nop
+80024d48  bc1fl 80024d1c &lt;s341_+0x180&gt;
+80024d4c  lwc1 $f5,0(a0)
+80024d50  swc1 $f5,0(a1)
+80024d54  b 80024d18 &lt;s341_+0x17c&gt;
+80024d58  addiu a1,a1,4</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>8002f3c4</code>–<code>8002f404</code>, 5000 trips.</p>
+<pre>8002f3c4  lwc1 $f5,0(a0)
+8002f3c8  c.lt.s $f30,$f5
+8002f3cc  nop
+8002f3d0  bc1f 8002f3e0 &lt;s341_+0x198&gt;
+8002f3d4  addiu a0,a0,8
+8002f3d8  swc1 $f5,0(a1)
+8002f3dc  addiu a1,a1,4
+8002f3e0  beq a0,a2,8002f338 &lt;s341_+0xf0&gt;
+8002f3e4  nop
+8002f3e8  lwc1 $f5,-4(a0)
+8002f3ec  c.lt.s $f30,$f5
+8002f3f0  nop
+8002f3f4  bc1fl 8002f3c8 &lt;s341_+0x180&gt;
+8002f3f8  lwc1 $f5,0(a0)
+8002f3fc  swc1 $f5,0(a1)
+8002f400  b 8002f3c4 &lt;s341_+0x17c&gt;
+8002f404  addiu a1,a1,4</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s341_swp_focus.html">open</a> · <a href="../pipetraces/s341_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s341_swp_focus.html" title="s341 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s341_noswp_focus.html">open</a> · <a href="../pipetraces/s341_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s341_noswp_focus.html" title="s341 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s332.html">s332</a> · next: <a href="s342.html">s342</a></footer>
+</main>
+</body>
+</html>

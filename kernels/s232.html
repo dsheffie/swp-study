@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s232: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s232 (loop interchange) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s231.html">s231</a> · next: <a href="s233.html">s233</a></div>
+<h1>s232</h1>
+<p class="lede">SWP is 1.26× slower.</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">90,576</td><td class="r bad">113,938</td></tr>
+  <tr><td>instructions</td><td class="r">66,989</td><td class="r">49,959</td></tr>
+  <tr><td>IPC</td><td class="r">0.740</td><td class="r bad">0.438</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">115</td><td class="r">144</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">11</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>loop interchange / interchanging of triangular loops</p>
+<pre>      do 1 nl = 1,2*(ntimes/n)
+      do 10 j = 2,n
+         do 20 i = 2,j
+            aa(i,j) = aa(i-1,j)*aa(i-1,j)+bb(i,j)
+  20     continue
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 1030 steady state
+#&lt;swps&gt;   100 estimated iterations before pipelining
+#&lt;swps&gt;       Not unrolled before pipelining
+#&lt;swps&gt;    11 cycles per iteration
+#&lt;swps&gt;     2 flops        ( 18% of peak)
+#&lt;swps&gt;     1 fmul         ( 28% of peak)
+#&lt;swps&gt;     1 fadd         ( 23% of peak)
+#&lt;swps&gt;     2 mem refs     ( 18% of peak)
+#&lt;swps&gt;     3 integer ops  ( 27% of peak)
+#&lt;swps&gt;     7 instructions ( 63% of peak)
+#&lt;swps&gt;     1 short trip threshold
+#&lt;swps&gt;     3 integer registers used.
+#&lt;swps&gt;     3 float registers used.
+#&lt;swps&gt;     5 min cycles required for resources
+#&lt;swps&gt;    11 cycles required for recurrence(s)
+#&lt;swps&gt;     2 operations in largest recurrence</pre>
+<pre>#&lt;swps&gt; Pipelined loop line 1031 steady state
+#&lt;swps&gt;   100 estimated iterations before pipelining
+#&lt;swps&gt;       Not unrolled before pipelining
+#&lt;swps&gt;    39 cycles per iteration
+#&lt;swps&gt;    18 flops        ( 46% of peak)
+#&lt;swps&gt;     9 fmuls        ( 85% of peak)
+#&lt;swps&gt;     9 fadds        ( 65% of peak)
+#&lt;swps&gt;    18 mem refs     ( 46% of peak)
+#&lt;swps&gt;     3 integer ops  (  7% of peak)
+#&lt;swps&gt;    39 instructions (100% of peak)
+#&lt;swps&gt;     1 short trip threshold
+#&lt;swps&gt;    27 integer registers used.
+#&lt;swps&gt;    19 float registers used.
+#&lt;swps&gt;    37 min cycles required for resources
+#&lt;swps&gt;    39 cycle schedule register allocated.</pre>
+<pre>#&lt;swpf&gt; Loop line 1030 wasn&#x27;t pipelined -- small estimated trip count (2).</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>8001971c</code>–<code>800197f4</code>, 990 trips.</p>
+<pre>8001971c  addiu t8,t8,4
+80019720  addiu t1,t1,4
+80019724  addiu a6,a6,4
+80019728  addiu a0,a0,4
+8001972c  addiu a4,a4,4
+80019730  addiu a3,a3,4
+80019734  addiu a2,a2,4
+80019738  addiu a7,a7,4
+8001973c  addiu a1,a1,4
+80019740  addiu ra,ra,4
+80019744  mul.s $f15,$f10,$f10
+80019748  addiu t3,t3,4
+8001974c  addiu s6,s6,4
+80019750  mul.s $f14,$f5,$f5
+80019754  addiu s5,s5,4
+80019758  lwc1 $f10,-4(s8)
+8001975c  addiu s4,s4,4
+80019760  mul.s $f13,$f8,$f8
+80019764  add.s $f10,$f10,$f15
+80019768  lwc1 $f5,-8(s4)
+8001976c  addiu s3,s3,4
+80019770  mul.s $f1,$f0,$f0
+80019774  add.s $f5,$f5,$f14
+80019778  lwc1 $f8,-8(s6)
+8001977c  addiu s8,s8,4
+80019780  mul.s $f14,$f11,$f11
+80019784  add.s $f8,$f8,$f13
+80019788  lwc1 $f0,-8(ra)
+8001978c  addiu s7,s7,4
+80019790  mul.s $f13,$f9,$f9
+80019794  add.s $f0,$f0,$f1
+80019798  lwc1 $f11,-8(a7)
+8001979c  addiu t2,t2,4
+800197a0  mul.s $f15,$f7,$f7
+800197a4  add.s $f11,$f11,$f14
+800197a8  lwc1 $f9,-8(a3)
+800197ac  swc1 $f10,-8(s7)
+800197b0  mul.s $f14,$f6,$f6
+800197b4  add.s $f9,$f9,$f13
+800197b8  lwc1 $f7,-8(a0)
+800197bc  swc1 $f5,-8(s3)
+800197c0  mul.s $f13,$f12,$f12
+800197c4  add.s $f7,$f7,$f15
+800197c8  lwc1 $f6,-8(t2)
+800197cc  swc1 $f8,-8(s5)
+800197d0  swc1 $f0,-8(t3)
+800197d4  add.s $f6,$f6,$f14
+800197d8  lwc1 $f12,-8(t1)
+800197dc  swc1 $f11,-8(a1)
+800197e0  swc1 $f9,-8(a2)
+800197e4  add.s $f12,$f12,$f13
+800197e8  swc1 $f7,-8(a4)
+800197ec  swc1 $f6,-8(t8)
+800197f0  bne t2,a5,8001971c &lt;s232_+0x530&gt;
+800197f4  swc1 $f12,-8(a6)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>8001ee78</code>–<code>8001ee90</code>, 616 trips.</p>
+<pre>8001ee78  mul.s $f4,$f3,$f3
+8001ee7c  lwc1 $f3,-4(v0)
+8001ee80  add.s $f3,$f3,$f4
+8001ee84  addiu at,at,4
+8001ee88  addiu v0,v0,4
+8001ee8c  bne v0,s2,8001ee78 &lt;s232_+0xb84&gt;
+8001ee90  swc1 $f3,-8(at)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s232_swp_focus.html">open</a> · <a href="../pipetraces/s232_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s232_swp_focus.html" title="s232 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s232_noswp_focus.html">open</a> · <a href="../pipetraces/s232_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s232_noswp_focus.html" title="s232 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s231.html">s231</a> · next: <a href="s233.html">s233</a></footer>
+</main>
+</body>
+</html>

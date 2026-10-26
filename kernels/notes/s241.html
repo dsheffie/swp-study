@@ -1,0 +1,24 @@
+<!-- title: s241: SWP wins by not clogging the LSU -->
+<!-- lede: SWP is 1.56× faster with the same instruction count and the same mispredicts: a real scheduling win, though not
+for the reason MIPSpro scheduled it. -->
+<h2>What happens</h2>
+<p>In the no-SWP loop, all 8 stores sit at the bottom, and their data arrives only when the 3-deep <code>mul.s</code> chains finish.
+Each store keeps its LSU slot until it retires and commits, so the 8 stores fill all 8 slots. The next trip's first load is allocated
+at cycle 59 but doesn't enter the LSU until <b>cycle 81</b>. The mem uop queue backs up behind it and in-order allocation stalls,
+so consecutive trips never overlap:</p>
+<pre>8001aebc  mul.s $f11,$f11,$f12  F   2 A  26 C  38                  &lt;- allocation stalled behind the loads
+ ...
+8001af54  swc1 $f7, -0x14($a1)  F  53 A  57 C  64 R  78   Q60  S61  Z64
+8001af5c  swc1 $f3, -0x14($a0)  F  55 A  59 C  65 R  79   Q61  S62  Z76   &lt;- data waits on the mul chain
+8001aeac  lwc1 $f12, 8($a2)     F  56 A  59 C  85 R  86   Q81  S82  H84   &lt;- next trip: 22 cycles to get an LSU slot</pre>
+<p>In MIPSpro's schedule, each stage stores values computed by the <i>previous</i> stage, so a store's data is ready as soon as it
+reaches the LSU. Stores drain quickly and loads get an LSU slot about 2 cycles after allocation. Memory ops, multiplies and
+retirement all flow steadily, about one per cycle:</p>
+<pre>800220ec  swc1 $f1, 4($a1)      F   3 A  10 C  17 R  22   Q13  S14  Z19
+800220f0  lwc1 $f1, 0x14($v1)   F   4 A  11 C  18 R  23   Q14  S15  H17
+800220f8  swc1 $f0, 8($a1)      F   6 A  12 C  19 R  24   Q15  S16  Z20
+800220fc  lwc1 $f0, 0x10($v0)   F   7 A  13 C  20 R  24   Q16  S17  H19</pre>
+
+<div class="verdict"><p>The same bottleneck as <a href="vas.html">vas</a>: an 8-entry LSU where a store holds its slot until commit.
+Here SWP's ordering happens to avoid it. Freeing the slot when the store moves to the store buffer would give the no-SWP code most of
+this gain.</p></div>

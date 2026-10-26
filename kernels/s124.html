@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s124: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s124 (induction variable recognition) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s123.html">s123</a> · next: <a href="s125.html">s125</a></div>
+<h1>s124</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">90,228</td><td class="r ">90,438</td></tr>
+  <tr><td>instructions</td><td class="r">101,636</td><td class="r">101,636</td></tr>
+  <tr><td>IPC</td><td class="r">1.126</td><td class="r ">1.124</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">205</td><td class="r">208</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">1</td><td class="r">1</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">—</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>induction variable recognition / induction variable under both sides of if (same value)</p>
+<pre>      do 1 nl = 1,2*ntimes
+      j = 0
+      do 10 i = 1,n/2
+         if(b(i) .gt. 0.) then
+            j = j + 1
+            a(j) = b(i) + d(i) * e(i)
+            else
+            j = j + 1
+            a(j) = c(i) + d(i) * e(i)
+         endif
+   10 continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+   1  continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<p>No <code>#&lt;swps&gt;</code>/<code>#&lt;swpf&gt;</code> notes in this kernel.</p>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>800141f0</code>–<code>80014258</code>, 5000 trips.</p>
+<pre>800141f0  addiu a1,a1,8
+800141f4  addiu a2,a2,8
+800141f8  beq a2,t2,80014138 &lt;s124_+0x144&gt;
+800141fc  addiu a3,a3,8
+80014200  lwc1 $f6,-4(a2)
+80014204  lwc1 $f7,-4(t1)
+80014208  c.lt.s $f30,$f6
+8001420c  lwc1 $f5,-4(a4)
+80014210  bc1f 80014224 &lt;s124_+0x230&gt;
+80014214  mul.s $f5,$f5,$f7
+80014218  add.s $f8,$f6,$f5
+8001421c  b 80014230 &lt;s124_+0x23c&gt;
+80014220  swc1 $f8,-4(a1)
+80014224  lwc1 $f9,-4(a3)
+80014228  add.s $f9,$f9,$f5
+8001422c  swc1 $f9,-4(a1)
+80014230  lwc1 $f6,0(a2)
+80014234  addiu t1,t1,8
+80014238  lwc1 $f7,-8(t1)
+8001423c  c.lt.s $f30,$f6
+80014240  lwc1 $f5,0(a4)
+80014244  addiu a4,a4,8
+80014248  bc1f 800141e4 &lt;s124_+0x1f0&gt;
+8001424c  mul.s $f5,$f5,$f7
+80014250  add.s $f8,$f6,$f5
+80014254  b 800141f0 &lt;s124_+0x1fc&gt;
+80014258  swc1 $f8,0(a1)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>800161c8</code>–<code>80016230</code>, 5000 trips.</p>
+<pre>800161c8  addiu a1,a1,8
+800161cc  addiu a2,a2,8
+800161d0  beq a2,t2,80016110 &lt;s124_+0x144&gt;
+800161d4  addiu a3,a3,8
+800161d8  lwc1 $f6,-4(a2)
+800161dc  lwc1 $f7,-4(t1)
+800161e0  c.lt.s $f30,$f6
+800161e4  lwc1 $f5,-4(a4)
+800161e8  bc1f 800161fc &lt;s124_+0x230&gt;
+800161ec  mul.s $f5,$f5,$f7
+800161f0  add.s $f8,$f6,$f5
+800161f4  b 80016208 &lt;s124_+0x23c&gt;
+800161f8  swc1 $f8,-4(a1)
+800161fc  lwc1 $f9,-4(a3)
+80016200  add.s $f9,$f9,$f5
+80016204  swc1 $f9,-4(a1)
+80016208  lwc1 $f6,0(a2)
+8001620c  addiu t1,t1,8
+80016210  lwc1 $f7,-8(t1)
+80016214  c.lt.s $f30,$f6
+80016218  lwc1 $f5,0(a4)
+8001621c  addiu a4,a4,8
+80016220  bc1f 800161bc &lt;s124_+0x1f0&gt;
+80016224  mul.s $f5,$f5,$f7
+80016228  add.s $f8,$f6,$f5
+8001622c  b 800161c8 &lt;s124_+0x1fc&gt;
+80016230  swc1 $f8,0(a1)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s124_swp_focus.html">open</a> · <a href="../pipetraces/s124_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s124_swp_focus.html" title="s124 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s124_noswp_focus.html">open</a> · <a href="../pipetraces/s124_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s124_noswp_focus.html" title="s124 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s123.html">s123</a> · next: <a href="s125.html">s125</a></footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s2712: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s2712 (control flow) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s2711.html">s2711</a> · next: <a href="s281.html">s281</a></div>
+<h1>s2712</h1>
+<p class="lede">SWP is 2.04× faster.</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">192,708</td><td class="r good">94,536</td></tr>
+  <tr><td>instructions</td><td class="r">102,329</td><td class="r">112,129</td></tr>
+  <tr><td>IPC</td><td class="r">0.531</td><td class="r good">1.186</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">5,004</td><td class="r">107</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">2</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">—</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>control flow / if to elemental min</p>
+<pre>      do 1 nl = 1,ntimes
+      do 10 i = 1,n
+         if(a(i) .gt. b(i)) a(i) = a(i) + b(i) * c(i)
+   10 continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+   1  continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swpf&gt; Loop line 1772 wasn&#x27;t pipelined -- MII (17) exceeded 14 (it is no longer profitable to pipeline this loop).</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>8001ff98</code>–<code>8001fff4</code>, 4900 trips.</p>
+<pre>8001ff98  lwc1 $f5,0(a0)
+8001ff9c  lwc1 $f0,0(a1)
+8001ffa0  c.lt.s $f0,$f5
+8001ffa4  nop
+8001ffa8  bc1f 8001ffc0 &lt;s2712_+0x1c4&gt;
+8001ffac  addiu a1,a1,8
+8001ffb0  lwc1 $f2,0(a2)
+8001ffb4  mul.s $f2,$f2,$f0
+8001ffb8  add.s $f2,$f5,$f2
+8001ffbc  swc1 $f2,0(a0)
+8001ffc0  addiu a0,a0,8
+8001ffc4  beq a0,a3,8001fef0 &lt;s2712_+0xf4&gt;
+8001ffc8  addiu a2,a2,8
+8001ffcc  lwc1 $f5,-4(a0)
+8001ffd0  lwc1 $f0,-4(a1)
+8001ffd4  c.lt.s $f0,$f5
+8001ffd8  nop
+8001ffdc  bc1fl 8001ff9c &lt;s2712_+0x1a0&gt;
+8001ffe0  lwc1 $f5,0(a0)
+8001ffe4  lwc1 $f3,-4(a2)
+8001ffe8  mul.s $f3,$f3,$f0
+8001ffec  add.s $f3,$f5,$f3
+8001fff0  b 8001ff98 &lt;s2712_+0x19c&gt;
+8001fff4  swc1 $f3,-4(a0)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>80029068</code>–<code>8002909c</code>, 9900 trips.</p>
+<pre>80029068  addiu a0,a0,4
+8002906c  beq a0,a3,80028ffc &lt;s2712_+0xf0&gt;
+80029070  addiu a1,a1,4
+80029074  lwc1 $f5,-4(a0)
+80029078  lwc1 $f0,-4(a2)
+8002907c  c.lt.s $f0,$f5
+80029080  nop
+80029084  bc1f 80029068 &lt;s2712_+0x15c&gt;
+80029088  addiu a2,a2,4
+8002908c  lwc1 $f1,-4(a1)
+80029090  mul.s $f1,$f1,$f0
+80029094  add.s $f1,$f5,$f1
+80029098  b 80029068 &lt;s2712_+0x15c&gt;
+8002909c  swc1 $f1,-4(a0)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s2712_swp_focus.html">open</a> · <a href="../pipetraces/s2712_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s2712_swp_focus.html" title="s2712 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s2712_noswp_focus.html">open</a> · <a href="../pipetraces/s2712_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s2712_noswp_focus.html" title="s2712 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s2711.html">s2711</a> · next: <a href="s281.html">s281</a></footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s316: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s316 (reductions) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s315.html">s315</a> · next: <a href="s317.html">s317</a></div>
+<h1>s316</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">152,104</td><td class="r ">152,104</td></tr>
+  <tr><td>instructions</td><td class="r">67,324</td><td class="r">67,324</td></tr>
+  <tr><td>IPC</td><td class="r">0.443</td><td class="r ">0.443</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">5,004</td><td class="r">5,004</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">2</td><td class="r">2</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">—</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>reductions / if to min reduction</p>
+<pre>      do 1 nl = 1,ntimes
+      x = a(1)
+      do 10 i = 2,n
+         if (a(i) .lt. x) x = a(i)
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,x)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swpf&gt; Loop line 2102 wasn&#x27;t pipelined because:
+#&lt;swpf&gt;       instructions added exceeds -CG:body_ifc_ratio</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>800229e8</code>–<code>80022a28</code>, 4900 trips.</p>
+<pre>800229e8  lwc1 $f5,0(a0)
+800229ec  c.lt.s $f5,$f0
+800229f0  nop
+800229f4  bc1f 80022a04 &lt;s316_+0x1a8&gt;
+800229f8  addiu a0,a0,8
+800229fc  mov.s $f0,$f5
+80022a00  swc1 $f5,32(sp)
+80022a04  beq a0,a1,8002294c &lt;s316_+0xf0&gt;
+80022a08  nop
+80022a0c  lwc1 $f5,-4(a0)
+80022a10  c.lt.s $f5,$f0
+80022a14  nop
+80022a18  bc1fl 800229ec &lt;s316_+0x190&gt;
+80022a1c  lwc1 $f5,0(a0)
+80022a20  mov.s $f0,$f5
+80022a24  b 800229e8 &lt;s316_+0x18c&gt;
+80022a28  swc1 $f5,32(sp)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>8002cab8</code>–<code>8002caf8</code>, 4900 trips.</p>
+<pre>8002cab8  lwc1 $f5,0(a0)
+8002cabc  c.lt.s $f5,$f0
+8002cac0  nop
+8002cac4  bc1f 8002cad4 &lt;s316_+0x1a8&gt;
+8002cac8  addiu a0,a0,8
+8002cacc  mov.s $f0,$f5
+8002cad0  swc1 $f5,32(sp)
+8002cad4  beq a0,a1,8002ca1c &lt;s316_+0xf0&gt;
+8002cad8  nop
+8002cadc  lwc1 $f5,-4(a0)
+8002cae0  c.lt.s $f5,$f0
+8002cae4  nop
+8002cae8  bc1fl 8002cabc &lt;s316_+0x190&gt;
+8002caec  lwc1 $f5,0(a0)
+8002caf0  mov.s $f0,$f5
+8002caf4  b 8002cab8 &lt;s316_+0x18c&gt;
+8002caf8  swc1 $f5,32(sp)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s316_swp_focus.html">open</a> · <a href="../pipetraces/s316_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s316_swp_focus.html" title="s316 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s316_noswp_focus.html">open</a> · <a href="../pipetraces/s316_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s316_noswp_focus.html" title="s316 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s315.html">s315</a> · next: <a href="s317.html">s317</a></footer>
+</main>
+</body>
+</html>

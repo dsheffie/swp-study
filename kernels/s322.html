@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s322: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s322 (recurrences) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s321.html">s321</a> · next: <a href="s323.html">s323</a></div>
+<h1>s322</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">179,372</td><td class="r ">180,082</td></tr>
+  <tr><td>instructions</td><td class="r">96,629</td><td class="r">96,328</td></tr>
+  <tr><td>IPC</td><td class="r">0.539</td><td class="r ">0.535</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">7</td><td class="r">104</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">15</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>recurrences / second order linear recurrence</p>
+<pre>      do 1 nl = 1,ntimes
+      do 10 i = 3,n
+         a(i) = a(i) + a(i-1) * b(i) + a(i-2) * c(i)
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 2339 steady state
+#&lt;swps&gt;   100 estimated iterations before pipelining
+#&lt;swps&gt;       Not unrolled before pipelining
+#&lt;swps&gt;    15 cycles per iteration
+#&lt;swps&gt;     4 flops        ( 26% of peak)
+#&lt;swps&gt;     2 fmuls        ( 44% of peak)
+#&lt;swps&gt;     2 fadds        ( 35% of peak)
+#&lt;swps&gt;     4 mem refs     ( 26% of peak)
+#&lt;swps&gt;     4 integer ops  ( 26% of peak)
+#&lt;swps&gt;    12 instructions ( 80% of peak)
+#&lt;swps&gt;     2 short trip threshold
+#&lt;swps&gt;     5 integer registers used.
+#&lt;swps&gt;     7 float registers used.
+#&lt;swps&gt;     9 min cycles required for resources
+#&lt;swps&gt;    15 cycles required for recurrence(s)
+#&lt;swps&gt;     4 operations in largest recurrence</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>80024164</code>–<code>800241b0</code>, 4800 trips.</p>
+<pre>80024164  lwc1 $f2,-4(a2)
+80024168  lwc1 $f1,-4(a0)
+8002416c  mul.s $f2,$f5,$f2
+80024170  mul.s $f1,$f0,$f1
+80024174  lwc1 $f0,-4(a1)
+80024178  add.s $f0,$f0,$f2
+8002417c  add.s $f0,$f0,$f1
+80024180  lwc1 $f7,0(a2)
+80024184  lwc1 $f6,0(a0)
+80024188  mul.s $f7,$f0,$f7
+8002418c  mul.s $f6,$f5,$f6
+80024190  lwc1 $f5,0(a1)
+80024194  add.s $f5,$f5,$f7
+80024198  addiu a2,a2,8
+8002419c  addiu a0,a0,8
+800241a0  add.s $f5,$f5,$f6
+800241a4  addiu a1,a1,8
+800241a8  swc1 $f0,-12(a1)
+800241ac  bne a1,a3,80024164 &lt;s322_+0xf4&gt;
+800241b0  swc1 $f5,-8(a1)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>8002e540</code>–<code>8002e590</code>, 4700 trips.</p>
+<pre>8002e540  swc1 $f5,0(a0)
+8002e544  lwc1 $f0,4(a0)
+8002e548  addiu v1,v1,8
+8002e54c  add.s $f4,$f0,$f1
+8002e550  addiu v0,v0,8
+8002e554  lwc1 $f1,0(v0)
+8002e558  lwc1 $f0,0(v1)
+8002e55c  add.s $f3,$f4,$f2
+8002e560  mul.s $f2,$f5,$f1
+8002e564  addiu a0,a0,8
+8002e568  beq a0,at,8002e464 &lt;s322_+0xe8&gt;
+8002e56c  mul.s $f1,$f3,$f0
+8002e570  swc1 $f3,-4(a0)
+8002e574  lwc1 $f0,0(a0)
+8002e578  add.s $f1,$f0,$f1
+8002e57c  lwc1 $f0,4(v0)
+8002e580  lwc1 $f4,4(v1)
+8002e584  add.s $f5,$f1,$f2
+8002e588  mul.s $f2,$f3,$f0
+8002e58c  bne a0,a1,8002e540 &lt;s322_+0x1c4&gt;
+8002e590  mul.s $f1,$f5,$f4</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s322_swp_focus.html">open</a> · <a href="../pipetraces/s322_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s322_swp_focus.html" title="s322 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s322_noswp_focus.html">open</a> · <a href="../pipetraces/s322_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s322_noswp_focus.html" title="s322 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s321.html">s321</a> · next: <a href="s323.html">s323</a></footer>
+</main>
+</body>
+</html>

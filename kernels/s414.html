@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s414: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s414 (loop recognition) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s413.html">s413</a> · next: <a href="s415.html">s415</a></div>
+<h1>s414</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">249,866</td><td class="r ">250,910</td></tr>
+  <tr><td>instructions</td><td class="r">84,881</td><td class="r">84,094</td></tr>
+  <tr><td>IPC</td><td class="r">0.340</td><td class="r ">0.335</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">11</td><td class="r">11</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">8.5</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>loop recognition / if loop to do loop, interchanging with do necessary</p>
+<pre>      do 1 nl = 1,ntimes/n
+      i = 1
+  10  if(i .gt. n) goto 20
+      do 30 j = 2,n
+         aa(i,j) = aa(i,j-1) + bb(i,j-1) * cc(i,j-1)
+   30 continue
+      i = i + 1
+      goto 10
+  20  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 2699 steady state
+#&lt;swps&gt;    50 estimated iterations before pipelining
+#&lt;swps&gt;     2 unrollings before pipelining
+#&lt;swps&gt;    17 cycles per 2 iterations
+#&lt;swps&gt;     4 flops        ( 23% of peak)
+#&lt;swps&gt;     2 fmuls        ( 40% of peak)
+#&lt;swps&gt;     2 fadds        ( 31% of peak)
+#&lt;swps&gt;     6 mem refs     ( 35% of peak)
+#&lt;swps&gt;     7 integer ops  ( 41% of peak)
+#&lt;swps&gt;    17 instructions (100% of peak)
+#&lt;swps&gt;     3 short trip threshold
+#&lt;swps&gt;    12 integer registers used.
+#&lt;swps&gt;     8 float registers used.</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>800266c8</code>–<code>8002674c</code>, 2300 trips.</p>
+<pre>800266c8  addu a5,a3,s0
+800266cc  addu t0,a2,s0
+800266d0  lwc1 $f5,-4(t0)
+800266d4  lwc1 $f4,-4(a5)
+800266d8  lwc1 $f6,-4(a2)
+800266dc  mul.s $f4,$f4,$f5
+800266e0  lwc1 $f5,-4(a3)
+800266e4  addu a5,a5,s0
+800266e8  lwc1 $f3,-4(a5)
+800266ec  mul.s $f5,$f5,$f6
+800266f0  addu a5,a5,s0
+800266f4  addu a2,t0,s0
+800266f8  lwc1 $f6,-4(a2)
+800266fc  addu a2,a2,s0
+80026700  lwc1 $f1,-4(a2)
+80026704  mul.s $f3,$f3,$f6
+80026708  add.s $f5,$f0,$f5
+8002670c  lwc1 $f0,-4(a5)
+80026710  addiu a0,a0,4
+80026714  addu t9,a4,s0
+80026718  mul.s $f0,$f0,$f1
+8002671c  add.s $f4,$f5,$f4
+80026720  addu t0,t9,s0
+80026724  addu a3,a5,s0
+80026728  addu a2,a2,s0
+8002672c  add.s $f3,$f4,$f3
+80026730  addu a5,t0,s0
+80026734  swc1 $f5,-4(a4)
+80026738  addu a4,a5,s0
+8002673c  add.s $f0,$f3,$f0
+80026740  swc1 $f4,-4(t9)
+80026744  swc1 $f3,-4(t0)
+80026748  bne a7,a0,800266c8 &lt;s414_+0x194&gt;
+8002674c  swc1 $f0,-4(a5)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>80031224</code>–<code>800312ac</code>, 2200 trips.</p>
+<pre>80031224  swc1 $f1,-4(a1)
+80031228  lwc1 $f0,-4(a7)
+8003122c  mul.s $f1,$f3,$f4
+80031230  swc1 $f7,-4(a6)
+80031234  lwc1 $f6,-4(a3)
+80031238  mul.s $f0,$f0,$f5
+8003123c  lwc1 $f4,-4(a2)
+80031240  lwc1 $f3,-4(a4)
+80031244  addu a7,a4,a5
+80031248  addu a4,a7,a5
+8003124c  addu a3,a2,a5
+80031250  addu a2,a3,a5
+80031254  add.s $f0,$f2,$f0
+80031258  addu a1,a0,a5
+8003125c  addu a6,a1,a5
+80031260  beq v0,v1,800313a8 &lt;s414_+0x39c&gt;
+80031264  add.s $f7,$f0,$f1
+80031268  swc1 $f0,-4(a1)
+8003126c  lwc1 $f1,-4(at)
+80031270  mul.s $f0,$f3,$f4
+80031274  swc1 $f2,-4(a0)
+80031278  lwc1 $f5,-4(a3)
+8003127c  mul.s $f1,$f1,$f6
+80031280  lwc1 $f4,-4(a2)
+80031284  lwc1 $f3,-4(a4)
+80031288  addu at,a4,a5
+8003128c  addu a4,at,a5
+80031290  addu a3,a2,a5
+80031294  addu a2,a3,a5
+80031298  add.s $f1,$f7,$f1
+8003129c  addu a1,a6,a5
+800312a0  addu a0,a1,a5
+800312a4  addiu v1,v1,4
+800312a8  bne t0,v1,80031224 &lt;s414_+0x218&gt;
+800312ac  add.s $f2,$f1,$f0</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s414_swp_focus.html">open</a> · <a href="../pipetraces/s414_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s414_swp_focus.html" title="s414 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s414_noswp_focus.html">open</a> · <a href="../pipetraces/s414_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s414_noswp_focus.html" title="s414 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s413.html">s413</a> · next: <a href="s415.html">s415</a></footer>
+</main>
+</body>
+</html>

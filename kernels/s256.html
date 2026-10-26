@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s256: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s256 (scalar and array expansion) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s255.html">s255</a> · next: <a href="s257.html">s257</a></div>
+<h1>s256</h1>
+<p class="lede">SWP is 1.06× slower.</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">177,384</td><td class="r bad">188,696</td></tr>
+  <tr><td>instructions</td><td class="r">85,979</td><td class="r">85,612</td></tr>
+  <tr><td>IPC</td><td class="r">0.485</td><td class="r bad">0.454</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">21</td><td class="r">18</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">8.25</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>scalar and array expansion / array expansion</p>
+<pre>      do 1 nl = 1,ntimes/n
+      do 10 i = 1,n
+         do 20 j = 2,n
+            a(j)    = aa(i,j) - a(j-1)
+            aa(i,j) = a(j) + bb(i,j)
+   20    continue
+   10 continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+   1  continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 1363 steady state
+#&lt;swps&gt;    25 estimated iterations before pipelining
+#&lt;swps&gt;     4 unrollings before pipelining
+#&lt;swps&gt;    33 cycles per 4 iterations
+#&lt;swps&gt;     8 flops        ( 24% of peak)
+#&lt;swps&gt;     0 fmuls        (  0% of peak)
+#&lt;swps&gt;     8 fadds        ( 68% of peak)
+#&lt;swps&gt;    16 mem refs     ( 48% of peak)
+#&lt;swps&gt;     9 integer ops  ( 27% of peak)
+#&lt;swps&gt;    33 instructions (100% of peak)
+#&lt;swps&gt;     4 short trip threshold
+#&lt;swps&gt;    25 integer registers used.
+#&lt;swps&gt;    25 float registers used.</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>8001cb58</code>–<code>8001cbe0</code>, 2300 trips.</p>
+<pre>8001cb58  addiu a3,a3,16
+8001cb5c  addiu a0,a0,4
+8001cb60  lwc1 $f8,-4(a1)
+8001cb64  lwc1 $f7,-4(a2)
+8001cb68  addu v1,s0,a2
+8001cb6c  sub.s $f8,$f8,$f0
+8001cb70  lwc1 $f5,-4(v1)
+8001cb74  addu v1,s0,v1
+8001cb78  addu v0,s0,v1
+8001cb7c  add.s $f7,$f7,$f8
+8001cb80  addu at,s0,a1
+8001cb84  lwc1 $f1,-4(at)
+8001cb88  addu a2,s0,v0
+8001cb8c  addu ra,s0,at
+8001cb90  sub.s $f1,$f1,$f8
+8001cb94  lwc1 $f6,-4(ra)
+8001cb98  swc1 $f8,-20(a3)
+8001cb9c  lwc1 $f4,-4(v1)
+8001cba0  sub.s $f6,$f6,$f1
+8001cba4  addu t9,s0,ra
+8001cba8  lwc1 $f0,-4(t9)
+8001cbac  add.s $f5,$f5,$f1
+8001cbb0  lwc1 $f3,-4(v0)
+8001cbb4  swc1 $f7,-4(a1)
+8001cbb8  sub.s $f0,$f0,$f6
+8001cbbc  addu a1,s0,t9
+8001cbc0  swc1 $f1,-16(a3)
+8001cbc4  add.s $f4,$f4,$f6
+8001cbc8  swc1 $f6,-12(a3)
+8001cbcc  swc1 $f5,-4(at)
+8001cbd0  add.s $f3,$f3,$f0
+8001cbd4  swc1 $f0,-8(a3)
+8001cbd8  swc1 $f4,-4(ra)
+8001cbdc  bne a7,a0,8001cb58 &lt;s256_+0x198&gt;
+8001cbe0  swc1 $f3,-4(t9)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>800250d0</code>–<code>800252e4</code>, 400 trips.</p>
+<pre>800250d0  addu a0,a5,v1
+800250d4  addu v0,a5,a0
+800250d8  sub.s $f13,$f13,$f18
+800250dc  addu a6,a5,a1
+800250e0  addu a7,a5,a6
+800250e4  swc1 $f6,-4(t0)
+800250e8  sub.s $f14,$f7,$f13
+800250ec  swc1 $f15,-4(t1)
+800250f0  swc1 $f5,-4(t2)
+800250f4  swc1 $f8,-4(t3)
+800250f8  sub.s $f16,$f0,$f14
+800250fc  swc1 $f17,0(t1)
+80025100  lwc1 $f5,-4(v1)
+80025104  add.s $f0,$f2,$f13
+80025108  swc1 $f21,4(t1)
+8002510c  swc1 $f9,8(t1)
+80025110  add.s $f8,$f5,$f14
+80025114  swc1 $f0,-4(s6)
+80025118  lwc1 $f7,-4(a1)
+8002511c  add.s $f6,$f3,$f25
+80025120  addu s6,a5,a7
+80025124  addu t8,a5,s6
+80025128  add.s $f5,$f4,$f18
+8002512c  addu at,a5,v0
+80025130  addu v1,a5,at
+80025134  lwc1 $f4,-4(v0)
+80025138  lwc1 $f3,-4(a0)
+8002513c  lwc1 $f2,-4(at)
+80025140  sub.s $f9,$f1,$f16
+80025144  lwc1 $f1,-4(a7)
+80025148  lwc1 $f0,-4(a6)
+8002514c  beq ra,t9,800253b4 &lt;s256_+0x7d0&gt;
+80025150  lwc1 $f15,-4(s6)
+80025154  addu a0,a5,v1
+80025158  addu v0,a5,a0
+8002515c  sub.s $f10,$f10,$f9
+80025160  addu t0,a5,t8
+80025164  addu t2,a5,t0
+80025168  swc1 $f6,-4(a2)
+8002516c  sub.s $f11,$f7,$f10
+80025170  swc1 $f19,12(t1)
+80025174  swc1 $f5,-4(a3)
+80025178  swc1 $f8,-4(s5)
+8002517c  sub.s $f12,$f0,$f11
+80025180  swc1 $f23,16(t1)
+80025184  lwc1 $f5,-4(v1)
+80025188  add.s $f0,$f2,$f10
+8002518c  swc1 $f25,20(t1)
+80025190  swc1 $f18,24(t1)
+80025194  add.s $f8,$f5,$f11
+80025198  swc1 $f0,-4(s0)
+8002519c  lwc1 $f7,-4(t8)
+800251a0  add.s $f6,$f3,$f16
+800251a4  addu s0,a5,t2
+800251a8  addu t3,a5,s0
+800251ac  add.s $f5,$f4,$f9
+800251b0  addu at,a5,v0
+800251b4  addu v1,a5,at
+800251b8  lwc1 $f4,-4(v0)
+800251bc  lwc1 $f3,-4(a0)
+800251c0  lwc1 $f2,-4(at)
+800251c4  sub.s $f18,$f1,$f12
+800251c8  lwc1 $f1,-4(t2)
+800251cc  lwc1 $f0,-4(t0)
+800251d0  beq s1,t9,80024ddc &lt;s256_+0x1f8&gt;
+800251d4  lwc1 $f19,-4(s0)
+800251d8  addu a0,a5,v1
+800251dc  addu v0,a5,a0
+800251e0  sub.s $f15,$f15,$f18
+800251e4  addu a2,a5,t3
+800251e8  addu a3,a5,a2
+800251ec  swc1 $f6,-4(a4)
+800251f0  sub.s $f17,$f7,$f15
+800251f4  swc1 $f13,28(t1)
+800251f8  swc1 $f5,-4(s4)
+800251fc  swc1 $f8,-4(a1)
+80025200  sub.s $f21,$f0,$f17
+80025204  swc1 $f14,32(t1)
+80025208  lwc1 $f5,-4(v1)
+8002520c  add.s $f0,$f2,$f15
+80025210  swc1 $f16,36(t1)
+80025214  swc1 $f9,40(t1)
+80025218  add.s $f8,$f5,$f17
+8002521c  swc1 $f0,-4(s6)
+80025220  lwc1 $f7,-4(t3)
+80025224  add.s $f6,$f3,$f12
+80025228  addu s6,a5,a3
+8002522c  addu s5,a5,s6
+80025230  add.s $f5,$f4,$f18
+80025234  addu at,a5,v0
+80025238  addu v1,a5,at
+8002523c  lwc1 $f4,-4(v0)
+80025240  lwc1 $f3,-4(a0)
+80025244  lwc1 $f2,-4(at)
+80025248  sub.s $f9,$f1,$f21
+8002524c  lwc1 $f1,-4(a3)
+80025250  lwc1 $f0,-4(a2)
+80025254  beq s2,t9,80025348 &lt;s256_+0x764&gt;
+80025258  lwc1 $f13,-4(s6)
+8002525c  addu v0,a5,v1
+80025260  addu at,a5,v0
+80025264  sub.s $f19,$f19,$f9
+80025268  addu a4,a5,s5
+8002526c  addu s4,a5,a4
+80025270  swc1 $f6,-4(a6)
+80025274  sub.s $f23,$f7,$f19
+80025278  swc1 $f10,44(t1)
+8002527c  swc1 $f5,-4(a7)
+80025280  swc1 $f8,-4(t8)
+80025284  sub.s $f25,$f0,$f23
+80025288  swc1 $f11,48(t1)
+8002528c  lwc1 $f0,-4(v1)
+80025290  add.s $f2,$f2,$f19
+80025294  swc1 $f12,52(t1)
+80025298  swc1 $f18,56(t1)
+8002529c  add.s $f8,$f0,$f23
+800252a0  swc1 $f2,-4(s0)
+800252a4  lwc1 $f7,-4(s5)
+800252a8  add.s $f6,$f3,$f21
+800252ac  addu s0,a5,s4
+800252b0  addu a1,a5,s0
+800252b4  add.s $f5,$f4,$f9
+800252b8  addu a0,a5,at
+800252bc  addu v1,a5,a0
+800252c0  lwc1 $f4,-4(at)
+800252c4  lwc1 $f3,-4(v0)
+800252c8  lwc1 $f2,-4(a0)
+800252cc  sub.s $f18,$f1,$f25
+800252d0  lwc1 $f1,-4(s4)
+800252d4  lwc1 $f0,-4(a4)
+800252d8  addiu t1,t1,64
+800252dc  addiu t9,t9,16
+800252e0  bne s3,t9,800250d0 &lt;s256_+0x4ec&gt;
+800252e4  lwc1 $f10,-4(s0)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s256_swp_focus.html">open</a> · <a href="../pipetraces/s256_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s256_swp_focus.html" title="s256 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s256_noswp_focus.html">open</a> · <a href="../pipetraces/s256_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s256_noswp_focus.html" title="s256 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s255.html">s255</a> · next: <a href="s257.html">s257</a></footer>
+</main>
+</body>
+</html>

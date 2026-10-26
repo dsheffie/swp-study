@@ -54,3 +54,7 @@ td.wrap { white-space: normal; }
   border: 1px solid var(--rule); border-radius: 4px; background: #12141a;
 }
 footer { margin-top: 3rem; color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule); padding-top: 1rem; }
+table.sortable { font-size: .82rem; }
+table.sortable th { white-space: normal; vertical-align: bottom; }
+table.sortable td.wrap { min-width: 14rem; }
+td.cause { white-space: normal; min-width: 18rem; }

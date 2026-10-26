@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s235: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s235 (loop interchanging) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s234.html">s234</a> · next: <a href="s241.html">s241</a></div>
+<h1>s235</h1>
+<p class="lede">SWP is 1.11× faster.</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">110,878</td><td class="r good">99,890</td></tr>
+  <tr><td>instructions</td><td class="r">65,484</td><td class="r">46,974</td></tr>
+  <tr><td>IPC</td><td class="r">0.591</td><td class="r good">0.470</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">21</td><td class="r">25</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">1</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">6.25</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>loop interchanging / imperfectly nested loops</p>
+<pre>      do 1 nl = 1,ntimes/n
+      do 10 i = 1,n
+         a(i) =  a(i) + b(i) * c(i)
+         do 20 j = 2,n
+            aa(i,j) = aa(i,j-1) +  bb(i,j) * a(i)
+  20     continue
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 1115 steady state
+#&lt;swps&gt;    25 estimated iterations before pipelining
+#&lt;swps&gt;     4 unrollings before pipelining
+#&lt;swps&gt;    25 cycles per 4 iterations
+#&lt;swps&gt;     8 flops        ( 32% of peak)
+#&lt;swps&gt;     4 fmuls        ( 57% of peak)
+#&lt;swps&gt;     4 fadds        ( 44% of peak)
+#&lt;swps&gt;    16 mem refs     ( 64% of peak)
+#&lt;swps&gt;     1 integer op   (  4% of peak)
+#&lt;swps&gt;    25 instructions (100% of peak)
+#&lt;swps&gt;     1 short trip threshold
+#&lt;swps&gt;     8 integer registers used.
+#&lt;swps&gt;     7 float registers used.</pre>
+<pre>#&lt;swps&gt; Pipelined loop line 1112 steady state
+#&lt;swps&gt;    25 estimated iterations before pipelining
+#&lt;swps&gt;     4 unrollings before pipelining
+#&lt;swps&gt;    25 cycles per 4 iterations
+#&lt;swps&gt;     8 flops        ( 32% of peak)
+#&lt;swps&gt;     4 fmuls        ( 57% of peak)
+#&lt;swps&gt;     4 fadds        ( 44% of peak)
+#&lt;swps&gt;    16 mem refs     ( 64% of peak)
+#&lt;swps&gt;     1 integer op   (  4% of peak)
+#&lt;swps&gt;    25 instructions (100% of peak)
+#&lt;swps&gt;     1 short trip threshold
+#&lt;swps&gt;     6 integer registers used.
+#&lt;swps&gt;     7 float registers used.</pre>
+<pre>#&lt;swps&gt; Pipelined loop line 1113 steady state
+#&lt;swps&gt;   100 estimated iterations before pipelining
+#&lt;swps&gt;       Not unrolled before pipelining
+#&lt;swps&gt;    42 cycles per iteration
+#&lt;swps&gt;    18 flops        ( 42% of peak)
+#&lt;swps&gt;     9 fmuls        ( 80% of peak)
+#&lt;swps&gt;     9 fadds        ( 61% of peak)
+#&lt;swps&gt;    20 mem refs     ( 47% of peak)
+#&lt;swps&gt;     4 integer ops  (  9% of peak)
+#&lt;swps&gt;    42 instructions (100% of peak)
+#&lt;swps&gt;     2 short trip threshold
+#&lt;swps&gt;    27 integer registers used.
+#&lt;swps&gt;    29 float registers used.
+#&lt;swps&gt;    39 min cycles required for resources
+#&lt;swps&gt;    42 cycle schedule register allocated.</pre>
+<pre>#&lt;swps&gt; Pipelined loop line 1115 steady state
+#&lt;swps&gt;    25 estimated iterations before pipelining
+#&lt;swps&gt;     4 unrollings before pipelining
+#&lt;swps&gt;    41 cycles per 4 iterations
+#&lt;swps&gt;    16 flops        ( 39% of peak)
+#&lt;swps&gt;     8 fmuls        ( 72% of peak)
+#&lt;swps&gt;     8 fadds        ( 55% of peak)
+#&lt;swps&gt;    24 mem refs     ( 58% of peak)
+#&lt;swps&gt;     1 integer op   (  2% of peak)
+#&lt;swps&gt;    41 instructions (100% of peak)
+#&lt;swps&gt;     2 short trip threshold
+#&lt;swps&gt;     9 integer registers used.
+#&lt;swps&gt;    18 float registers used.</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>8001ab10</code>–<code>8001abf8</code>, 1089 trips.</p>
+<pre>8001ab10  addiu a0,a0,4
+8001ab14  addiu a7,a7,4
+8001ab18  addiu a1,a1,4
+8001ab1c  lwc1 $f27,-4(a4)
+8001ab20  lwc1 $f25,-4(a6)
+8001ab24  addiu a4,a4,4
+8001ab28  addiu a3,a3,4
+8001ab2c  mul.s $f27,$f27,$f25
+8001ab30  lwc1 $f21,-8(a0)
+8001ab34  addiu a2,a2,4
+8001ab38  addiu s8,s8,4
+8001ab3c  mul.s $f21,$f21,$f25
+8001ab40  lwc1 $f19,-8(a2)
+8001ab44  lwc1 $f23,-8(a1)
+8001ab48  addiu t8,t8,4
+8001ab4c  mul.s $f19,$f19,$f25
+8001ab50  add.s $f23,$f23,$f27
+8001ab54  addiu ra,ra,4
+8001ab58  lwc1 $f18,-8(t8)
+8001ab5c  addiu t2,t2,4
+8001ab60  add.s $f21,$f23,$f21
+8001ab64  mul.s $f18,$f18,$f25
+8001ab68  lwc1 $f17,-8(t2)
+8001ab6c  addiu s4,s4,4
+8001ab70  addiu s3,s3,4
+8001ab74  mul.s $f17,$f17,$f25
+8001ab78  add.s $f19,$f21,$f19
+8001ab7c  addiu s2,s2,4
+8001ab80  lwc1 $f16,-8(s3)
+8001ab84  addiu s1,s1,4
+8001ab88  add.s $f18,$f19,$f18
+8001ab8c  mul.s $f16,$f16,$f25
+8001ab90  lwc1 $f15,-8(s1)
+8001ab94  addiu s7,s7,4
+8001ab98  addiu t1,t1,4
+8001ab9c  mul.s $f15,$f15,$f25
+8001aba0  add.s $f17,$f18,$f17
+8001aba4  addiu t3,t3,4
+8001aba8  lwc1 $f14,-8(t1)
+8001abac  addiu s6,s6,4
+8001abb0  add.s $f16,$f17,$f16
+8001abb4  mul.s $f14,$f14,$f25
+8001abb8  lwc1 $f13,-8(s6)
+8001abbc  addiu s5,s5,4
+8001abc0  addiu a6,a6,4
+8001abc4  mul.s $f13,$f13,$f25
+8001abc8  add.s $f15,$f16,$f15
+8001abcc  swc1 $f23,-8(a3)
+8001abd0  swc1 $f21,-8(a7)
+8001abd4  swc1 $f19,-8(s8)
+8001abd8  add.s $f14,$f15,$f14
+8001abdc  swc1 $f18,-8(ra)
+8001abe0  swc1 $f17,-8(s4)
+8001abe4  swc1 $f16,-8(s2)
+8001abe8  add.s $f13,$f14,$f13
+8001abec  swc1 $f15,-8(s7)
+8001abf0  swc1 $f14,-8(t3)
+8001abf4  bne a6,a5,8001ab10 &lt;s235_+0x79c&gt;
+8001abf8  swc1 $f13,-8(s5)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>80020e30</code>–<code>800212c0</code>, 143 trips.</p>
+<pre>80020e30  mul.s $f4,$f1,$f17
+80020e34  swc1 $f2,20(s7)
+80020e38  swc1 $f0,20(s6)
+80020e3c  lwc1 $f2,8(s5)
+80020e40  lwc1 $f0,4(s4)
+80020e44  lwc1 $f1,12(s3)
+80020e48  mul.s $f3,$f2,$f17
+80020e4c  add.s $f11,$f0,$f4
+80020e50  addiu s7,s7,28
+80020e54  lwc1 $f0,12(s2)
+80020e58  mul.s $f2,$f1,$f17
+80020e5c  add.s $f21,$f11,$f5
+80020e60  addiu s1,s1,28
+80020e64  lwc1 $f1,16(s0)
+80020e68  mul.s $f4,$f0,$f17
+80020e6c  add.s $f19,$f21,$f3
+80020e70  swc1 $f25,0(ra)
+80020e74  lwc1 $f0,20(t9)
+80020e78  mul.s $f3,$f1,$f17
+80020e7c  add.s $f18,$f19,$f2
+80020e80  swc1 $f27,4(t8)
+80020e84  lwc1 $f1,20(t3)
+80020e88  mul.s $f2,$f0,$f17
+80020e8c  add.s $f16,$f18,$f4
+80020e90  swc1 $f7,8(t2)
+80020e94  lwc1 $f0,-4(s1)
+80020e98  mul.s $f1,$f1,$f17
+80020e9c  add.s $f15,$f16,$f3
+80020ea0  swc1 $f8,12(t1)
+80020ea4  addiu s6,s6,28
+80020ea8  mul.s $f3,$f0,$f17
+80020eac  add.s $f13,$f15,$f2
+80020eb0  swc1 $f9,12(t0)
+80020eb4  lwc1 $f17,4(a7)
+80020eb8  lwc1 $f0,4(a6)
+80020ebc  add.s $f2,$f13,$f1
+80020ec0  swc1 $f10,16(a5)
+80020ec4  lwc1 $f1,8(a4)
+80020ec8  mul.s $f5,$f0,$f17
+80020ecc  add.s $f0,$f2,$f3
+80020ed0  beq a7,a3,800214b4 &lt;s235_+0x11c4&gt;
+80020ed4  swc1 $f23,4(a2)
+80020ed8  mul.s $f4,$f1,$f17
+80020edc  swc1 $f2,-4(s7)
+80020ee0  swc1 $f0,-4(s6)
+80020ee4  lwc1 $f2,12(s5)
+80020ee8  lwc1 $f0,8(s4)
+80020eec  lwc1 $f1,16(s3)
+80020ef0  mul.s $f3,$f2,$f17
+80020ef4  add.s $f6,$f0,$f4
+80020ef8  addiu t9,t9,28
+80020efc  lwc1 $f0,16(s2)
+80020f00  mul.s $f2,$f1,$f17
+80020f04  add.s $f7,$f6,$f5
+80020f08  addiu a5,a5,28
+80020f0c  lwc1 $f1,20(s0)
+80020f10  mul.s $f4,$f0,$f17
+80020f14  add.s $f8,$f7,$f3
+80020f18  swc1 $f21,4(ra)
+80020f1c  lwc1 $f0,-4(t9)
+80020f20  mul.s $f3,$f1,$f17
+80020f24  add.s $f9,$f8,$f2
+80020f28  swc1 $f19,8(t8)
+80020f2c  lwc1 $f1,24(t3)
+80020f30  mul.s $f2,$f0,$f17
+80020f34  add.s $f10,$f9,$f4
+80020f38  swc1 $f18,12(t2)
+80020f3c  lwc1 $f0,0(s1)
+80020f40  mul.s $f1,$f1,$f17
+80020f44  add.s $f12,$f10,$f3
+80020f48  swc1 $f16,16(t1)
+80020f4c  addiu t3,t3,28
+80020f50  mul.s $f3,$f0,$f17
+80020f54  add.s $f14,$f12,$f2
+80020f58  swc1 $f15,16(t0)
+80020f5c  lwc1 $f17,8(a7)
+80020f60  lwc1 $f0,8(a6)
+80020f64  add.s $f2,$f14,$f1
+80020f68  swc1 $f13,-8(a5)
+80020f6c  lwc1 $f1,12(a4)
+80020f70  mul.s $f5,$f0,$f17
+80020f74  add.s $f0,$f2,$f3
+80020f78  beq a7,a1,80021438 &lt;s235_+0x1148&gt;
+80020f7c  swc1 $f11,8(a2)
+80020f80  mul.s $f4,$f1,$f17
+80020f84  swc1 $f2,0(s7)
+80020f88  swc1 $f0,0(s6)
+80020f8c  lwc1 $f2,16(s5)
+80020f90  lwc1 $f0,12(s4)
+80020f94  lwc1 $f1,20(s3)
+80020f98  mul.s $f3,$f2,$f17
+80020f9c  add.s $f11,$f0,$f4
+80020fa0  addiu t1,t1,28
+80020fa4  lwc1 $f0,20(s2)
+80020fa8  mul.s $f2,$f1,$f17
+80020fac  add.s $f21,$f11,$f5
+80020fb0  addiu s0,s0,28
+80020fb4  lwc1 $f1,-4(s0)
+80020fb8  mul.s $f4,$f0,$f17
+80020fbc  add.s $f19,$f21,$f3
+80020fc0  swc1 $f7,8(ra)
+80020fc4  lwc1 $f0,0(t9)
+80020fc8  mul.s $f3,$f1,$f17
+80020fcc  add.s $f18,$f19,$f2
+80020fd0  swc1 $f8,12(t8)
+80020fd4  lwc1 $f1,0(t3)
+80020fd8  mul.s $f2,$f0,$f17
+80020fdc  add.s $f16,$f18,$f4
+80020fe0  swc1 $f9,16(t2)
+80020fe4  lwc1 $f0,4(s1)
+80020fe8  mul.s $f1,$f1,$f17
+80020fec  add.s $f15,$f16,$f3
+80020ff0  swc1 $f10,-8(t1)
+80020ff4  addiu t0,t0,28
+80020ff8  mul.s $f3,$f0,$f17
+80020ffc  add.s $f13,$f15,$f2
+80021000  swc1 $f12,-8(t0)
+80021004  lwc1 $f17,12(a7)
+80021008  lwc1 $f0,12(a6)
+8002100c  add.s $f2,$f13,$f1
+80021010  swc1 $f14,-4(a5)
+80021014  lwc1 $f1,16(a4)
+80021018  mul.s $f5,$f0,$f17
+8002101c  add.s $f0,$f2,$f3
+80021020  beq a7,a0,80020abc &lt;s235_+0x7cc&gt;
+80021024  swc1 $f6,12(a2)
+80021028  mul.s $f4,$f1,$f17
+8002102c  swc1 $f2,4(s7)
+80021030  swc1 $f0,4(s6)
+80021034  lwc1 $f2,20(s5)
+80021038  lwc1 $f0,16(s4)
+8002103c  lwc1 $f1,24(s3)
+80021040  mul.s $f3,$f2,$f17
+80021044  add.s $f6,$f0,$f4
+80021048  addiu s3,s3,28
+8002104c  lwc1 $f0,24(s2)
+80021050  mul.s $f2,$f1,$f17
+80021054  add.s $f7,$f6,$f5
+80021058  addiu t2,t2,28
+8002105c  lwc1 $f1,0(s0)
+80021060  mul.s $f4,$f0,$f17
+80021064  add.s $f8,$f7,$f3
+80021068  swc1 $f21,12(ra)
+8002106c  lwc1 $f0,4(t9)
+80021070  mul.s $f3,$f1,$f17
+80021074  add.s $f9,$f8,$f2
+80021078  swc1 $f19,16(t8)
+8002107c  lwc1 $f1,4(t3)
+80021080  mul.s $f2,$f0,$f17
+80021084  add.s $f10,$f9,$f4
+80021088  swc1 $f18,-8(t2)
+8002108c  lwc1 $f0,8(s1)
+80021090  mul.s $f1,$f1,$f17
+80021094  add.s $f12,$f10,$f3
+80021098  swc1 $f16,-4(t1)
+8002109c  addiu s2,s2,28
+800210a0  mul.s $f3,$f0,$f17
+800210a4  add.s $f14,$f12,$f2
+800210a8  swc1 $f15,-4(t0)
+800210ac  lwc1 $f17,16(a7)
+800210b0  lwc1 $f0,16(a6)
+800210b4  add.s $f2,$f14,$f1
+800210b8  swc1 $f13,0(a5)
+800210bc  lwc1 $f1,20(a4)
+800210c0  mul.s $f5,$f0,$f17
+800210c4  add.s $f0,$f2,$f3
+800210c8  beq a7,v1,800213bc &lt;s235_+0x10cc&gt;
+800210cc  swc1 $f11,16(a2)
+800210d0  mul.s $f4,$f1,$f17
+800210d4  swc1 $f2,8(s7)
+800210d8  swc1 $f0,8(s6)
+800210dc  lwc1 $f2,24(s5)
+800210e0  lwc1 $f0,20(s4)
+800210e4  lwc1 $f1,0(s3)
+800210e8  mul.s $f3,$f2,$f17
+800210ec  add.s $f11,$f0,$f4
+800210f0  addiu a2,a2,28
+800210f4  lwc1 $f0,0(s2)
+800210f8  mul.s $f2,$f1,$f17
+800210fc  add.s $f21,$f11,$f5
+80021100  addiu s5,s5,28
+80021104  lwc1 $f1,4(s0)
+80021108  mul.s $f4,$f0,$f17
+8002110c  add.s $f19,$f21,$f3
+80021110  swc1 $f7,16(ra)
+80021114  lwc1 $f0,8(t9)
+80021118  mul.s $f3,$f1,$f17
+8002111c  add.s $f18,$f19,$f2
+80021120  swc1 $f8,20(t8)
+80021124  lwc1 $f1,8(t3)
+80021128  mul.s $f2,$f0,$f17
+8002112c  add.s $f16,$f18,$f4
+80021130  swc1 $f9,-4(t2)
+80021134  lwc1 $f0,12(s1)
+80021138  mul.s $f1,$f1,$f17
+8002113c  add.s $f15,$f16,$f3
+80021140  swc1 $f10,0(t1)
+80021144  addiu t8,t8,28
+80021148  mul.s $f3,$f0,$f17
+8002114c  add.s $f13,$f15,$f2
+80021150  swc1 $f12,0(t0)
+80021154  lwc1 $f17,20(a7)
+80021158  lwc1 $f0,20(a6)
+8002115c  add.s $f2,$f13,$f1
+80021160  swc1 $f14,4(a5)
+80021164  lwc1 $f1,24(a4)
+80021168  mul.s $f5,$f0,$f17
+8002116c  add.s $f0,$f2,$f3
+80021170  beq a7,v0,8002134c &lt;s235_+0x105c&gt;
+80021174  swc1 $f6,-8(a2)
+80021178  mul.s $f4,$f1,$f17
+8002117c  swc1 $f2,12(s7)
+80021180  swc1 $f0,12(s6)
+80021184  lwc1 $f2,0(s5)
+80021188  lwc1 $f0,24(s4)
+8002118c  lwc1 $f1,4(s3)
+80021190  mul.s $f3,$f2,$f17
+80021194  add.s $f6,$f0,$f4
+80021198  addiu ra,ra,28
+8002119c  lwc1 $f0,4(s2)
+800211a0  mul.s $f2,$f1,$f17
+800211a4  add.s $f7,$f6,$f5
+800211a8  addiu s4,s4,28
+800211ac  lwc1 $f1,8(s0)
+800211b0  mul.s $f4,$f0,$f17
+800211b4  add.s $f8,$f7,$f3
+800211b8  swc1 $f21,-8(ra)
+800211bc  lwc1 $f0,12(t9)
+800211c0  mul.s $f3,$f1,$f17
+800211c4  add.s $f9,$f8,$f2
+800211c8  swc1 $f19,-4(t8)
+800211cc  lwc1 $f1,12(t3)
+800211d0  mul.s $f2,$f0,$f17
+800211d4  add.s $f10,$f9,$f4
+800211d8  swc1 $f18,0(t2)
+800211dc  lwc1 $f0,16(s1)
+800211e0  mul.s $f1,$f1,$f17
+800211e4  add.s $f12,$f10,$f3
+800211e8  swc1 $f16,4(t1)
+800211ec  addiu a4,a4,28
+800211f0  mul.s $f3,$f0,$f17
+800211f4  add.s $f14,$f12,$f2
+800211f8  swc1 $f15,4(t0)
+800211fc  lwc1 $f17,24(a7)
+80021200  lwc1 $f0,24(a6)
+80021204  add.s $f2,$f14,$f1
+80021208  swc1 $f13,8(a5)
+8002120c  lwc1 $f1,0(a4)
+80021210  mul.s $f5,$f0,$f17
+80021214  add.s $f0,$f2,$f3
+80021218  beq a7,at,800212d0 &lt;s235_+0xfe0&gt;
+8002121c  swc1 $f11,-4(a2)
+80021220  mul.s $f4,$f1,$f17
+80021224  swc1 $f2,16(s7)
+80021228  swc1 $f0,16(s6)
+8002122c  lwc1 $f2,4(s5)
+80021230  lwc1 $f0,0(s4)
+80021234  lwc1 $f1,8(s3)
+80021238  mul.s $f3,$f2,$f17
+8002123c  add.s $f23,$f0,$f4
+80021240  lwc1 $f0,8(s2)
+80021244  mul.s $f2,$f1,$f17
+80021248  add.s $f25,$f23,$f5
+8002124c  addiu a7,a7,28
+80021250  lwc1 $f1,12(s0)
+80021254  mul.s $f4,$f0,$f17
+80021258  add.s $f27,$f25,$f3
+8002125c  swc1 $f7,-4(ra)
+80021260  lwc1 $f0,16(t9)
+80021264  mul.s $f3,$f1,$f17
+80021268  add.s $f7,$f27,$f2
+8002126c  swc1 $f8,0(t8)
+80021270  lwc1 $f1,16(t3)
+80021274  mul.s $f2,$f0,$f17
+80021278  add.s $f8,$f7,$f4
+8002127c  swc1 $f9,4(t2)
+80021280  lwc1 $f0,20(s1)
+80021284  mul.s $f1,$f1,$f17
+80021288  add.s $f9,$f8,$f3
+8002128c  swc1 $f10,8(t1)
+80021290  addiu a6,a6,28
+80021294  mul.s $f0,$f0,$f17
+80021298  add.s $f10,$f9,$f2
+8002129c  swc1 $f12,8(t0)
+800212a0  lwc1 $f17,0(a7)
+800212a4  lwc1 $f3,0(a6)
+800212a8  add.s $f2,$f10,$f1
+800212ac  swc1 $f14,12(a5)
+800212b0  lwc1 $f1,4(a4)
+800212b4  mul.s $f5,$f3,$f17
+800212b8  add.s $f0,$f2,$f0
+800212bc  bne a7,s8,80020e30 &lt;s235_+0xb40&gt;
+800212c0  swc1 $f6,0(a2)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s235_swp_focus.html">open</a> · <a href="../pipetraces/s235_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s235_swp_focus.html" title="s235 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s235_noswp_focus.html">open</a> · <a href="../pipetraces/s235_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s235_noswp_focus.html" title="s235 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s234.html">s234</a> · next: <a href="s241.html">s241</a></footer>
+</main>
+</body>
+</html>

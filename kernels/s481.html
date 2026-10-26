@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s481: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s481 (non-local goto&#x27;s) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s471.html">s471</a> · next: <a href="s482.html">s482</a></div>
+<h1>s481</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">95,146</td><td class="r ">95,538</td></tr>
+  <tr><td>instructions</td><td class="r">132,733</td><td class="r">132,733</td></tr>
+  <tr><td>IPC</td><td class="r">1.395</td><td class="r ">1.389</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">106</td><td class="r">108</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">—</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>non-local goto&#x27;s / stop statement</p>
+<pre>      do 1 nl = 1,ntimes
+      do 10 i = 1, n
+         if (d(i) .lt. 0.) stop &#x27;stop 1&#x27;
+         a(i) = a(i) + b(i) * c(i)
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<p>No <code>#&lt;swps&gt;</code>/<code>#&lt;swpf&gt;</code> notes in this kernel.</p>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>80029448</code>–<code>80029480</code>, 9900 trips.</p>
+<pre>80029448  lwc1 $f0,-4(a1)
+8002944c  c.lt.s $f0,$f30
+80029450  nop
+80029454  bc1t 80029598 &lt;s481_+0x26c&gt;
+80029458  addiu a1,a1,4
+8002945c  lwc1 $f3,-4(a4)
+80029460  lwc1 $f2,-4(a2)
+80029464  mul.s $f2,$f2,$f3
+80029468  lwc1 $f1,-4(a3)
+8002946c  addiu a3,a3,4
+80029470  add.s $f1,$f1,$f2
+80029474  addiu a2,a2,4
+80029478  addiu a4,a4,4
+8002947c  bne a1,a5,80029448 &lt;s481_+0x11c&gt;
+80029480  swc1 $f1,-8(a3)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>80034838</code>–<code>80034870</code>, 9900 trips.</p>
+<pre>80034838  lwc1 $f0,-4(a1)
+8003483c  c.lt.s $f0,$f30
+80034840  nop
+80034844  bc1t 80034988 &lt;s481_+0x26c&gt;
+80034848  addiu a1,a1,4
+8003484c  lwc1 $f3,-4(a4)
+80034850  lwc1 $f2,-4(a2)
+80034854  mul.s $f2,$f2,$f3
+80034858  lwc1 $f1,-4(a3)
+8003485c  addiu a3,a3,4
+80034860  add.s $f1,$f1,$f2
+80034864  addiu a2,a2,4
+80034868  addiu a4,a4,4
+8003486c  bne a1,a5,80034838 &lt;s481_+0x11c&gt;
+80034870  swc1 $f1,-8(a3)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s481_swp_focus.html">open</a> · <a href="../pipetraces/s481_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s481_swp_focus.html" title="s481 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s481_noswp_focus.html">open</a> · <a href="../pipetraces/s481_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s481_noswp_focus.html" title="s481 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s471.html">s471</a> · next: <a href="s482.html">s482</a></footer>
+</main>
+</body>
+</html>

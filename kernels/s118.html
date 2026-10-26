@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s118: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s118 (linear dependence testing) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s116.html">s116</a> · next: <a href="s119.html">s119</a></div>
+<h1>s118</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">80,034</td><td class="r ">78,838</td></tr>
+  <tr><td>instructions</td><td class="r">54,984</td><td class="r">55,602</td></tr>
+  <tr><td>IPC</td><td class="r">0.687</td><td class="r ">0.705</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">540</td><td class="r">404</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">1</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">5.25</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>linear dependence testing / potential dot product recursion</p>
+<pre>      do 1 nl = 1,2*(ntimes/n)
+      do 10 i = 2,n
+         do 20 j = 1,i-1
+               a(i) = a(i) + bb(i,j) * a(i-j)
+  20     continue
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 295 steady state
+#&lt;swps&gt;    25 estimated iterations before pipelining
+#&lt;swps&gt;     4 unrollings before pipelining
+#&lt;swps&gt;    21 cycles per 4 iterations
+#&lt;swps&gt;     8 flops        ( 38% of peak)
+#&lt;swps&gt;     4 fmuls        ( 66% of peak)
+#&lt;swps&gt;     4 fadds        ( 52% of peak)
+#&lt;swps&gt;     8 mem refs     ( 38% of peak)
+#&lt;swps&gt;     5 integer ops  ( 23% of peak)
+#&lt;swps&gt;    21 instructions (100% of peak)
+#&lt;swps&gt;     2 short trip threshold
+#&lt;swps&gt;    15 integer registers used.
+#&lt;swps&gt;    15 float registers used.</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>80012ca0</code>–<code>80012cf4</code>, 2208 trips.</p>
+<pre>80012ca0  lwc1 $f3,-8(a0)
+80012ca4  lwc1 $f6,-4(a1)
+80012ca8  lwc1 $f5,-4(a0)
+80012cac  addu a5,s0,a1
+80012cb0  lwc1 $f4,-4(a5)
+80012cb4  mul.s $f5,$f5,$f6
+80012cb8  lwc1 $f2,-12(a0)
+80012cbc  addu a1,s0,a5
+80012cc0  mul.s $f3,$f3,$f4
+80012cc4  lwc1 $f4,-4(a1)
+80012cc8  lwc1 $f1,-16(a0)
+80012ccc  addu a1,s0,a1
+80012cd0  mul.s $f2,$f2,$f4
+80012cd4  lwc1 $f4,-4(a1)
+80012cd8  add.s $f0,$f0,$f5
+80012cdc  mul.s $f1,$f1,$f4
+80012ce0  add.s $f0,$f0,$f3
+80012ce4  add.s $f0,$f0,$f2
+80012ce8  addiu a0,a0,-16
+80012cec  addu a1,s0,a1
+80012cf0  bne a0,s1,80012ca0 &lt;s118_+0x18c&gt;
+80012cf4  add.s $f0,$f0,$f1</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>80014114</code>–<code>80014210</code>, 560 trips.</p>
+<pre>80014114  lwc1 $f5,-20(t1)
+80014118  lwc1 $f7,-4(a3)
+8001411c  mul.s $f11,$f6,$f10
+80014120  add.s $f3,$f0,$f9
+80014124  lwc1 $f2,-16(t1)
+80014128  lwc1 $f0,-4(t0)
+8001412c  lwc1 $f1,-4(a7)
+80014130  add.s $f4,$f3,$f4
+80014134  mul.s $f0,$f2,$f0
+80014138  lwc1 $f6,-40(t1)
+8001413c  lwc1 $f3,-28(t1)
+80014140  mul.s $f2,$f5,$f1
+80014144  lwc1 $f1,-4(a6)
+80014148  addu a6,a4,a5
+8001414c  addu a3,a4,a6
+80014150  addu t0,a4,a3
+80014154  add.s $f0,$f4,$f0
+80014158  addu a7,a4,t0
+8001415c  mul.s $f4,$f3,$f1
+80014160  beq t1,a2,80014220 &lt;s118_+0x3e0&gt;
+80014164  add.s $f0,$f0,$f2
+80014168  lwc1 $f5,-36(t1)
+8001416c  lwc1 $f8,-4(a6)
+80014170  mul.s $f7,$f6,$f7
+80014174  add.s $f3,$f0,$f11
+80014178  lwc1 $f2,-32(t1)
+8001417c  lwc1 $f0,-4(a1)
+80014180  lwc1 $f1,-4(a0)
+80014184  add.s $f4,$f3,$f4
+80014188  mul.s $f0,$f2,$f0
+8001418c  lwc1 $f6,-56(t1)
+80014190  lwc1 $f3,-44(t1)
+80014194  mul.s $f2,$f5,$f1
+80014198  lwc1 $f1,-4(v1)
+8001419c  addu v1,a4,a7
+800141a0  addu a6,a4,v1
+800141a4  addu a1,a4,a6
+800141a8  add.s $f0,$f4,$f0
+800141ac  addu a0,a4,a1
+800141b0  mul.s $f4,$f3,$f1
+800141b4  beq t1,v0,80013fd4 &lt;s118_+0x194&gt;
+800141b8  add.s $f0,$f0,$f2
+800141bc  lwc1 $f5,-52(t1)
+800141c0  lwc1 $f10,-4(v1)
+800141c4  mul.s $f9,$f6,$f8
+800141c8  add.s $f3,$f0,$f7
+800141cc  lwc1 $f2,-48(t1)
+800141d0  lwc1 $f1,-4(at)
+800141d4  lwc1 $f0,-4(a5)
+800141d8  add.s $f4,$f3,$f4
+800141dc  mul.s $f3,$f2,$f1
+800141e0  lwc1 $f6,-72(t1)
+800141e4  lwc1 $f2,-60(t1)
+800141e8  mul.s $f1,$f5,$f0
+800141ec  lwc1 $f0,-4(a3)
+800141f0  addu a3,a4,a0
+800141f4  addu v1,a4,a3
+800141f8  addu at,a4,v1
+800141fc  add.s $f3,$f4,$f3
+80014200  addu a5,a4,at
+80014204  mul.s $f4,$f2,$f0
+80014208  addiu t1,t1,-48
+8001420c  bne t1,t2,80014114 &lt;s118_+0x2d4&gt;
+80014210  add.s $f0,$f3,$f1</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s118_swp_focus.html">open</a> · <a href="../pipetraces/s118_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s118_swp_focus.html" title="s118 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s118_noswp_focus.html">open</a> · <a href="../pipetraces/s118_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s118_noswp_focus.html" title="s118 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s116.html">s116</a> · next: <a href="s119.html">s119</a></footer>
+</main>
+</body>
+</html>

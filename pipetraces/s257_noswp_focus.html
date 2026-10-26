@@ -1,0 +1,73 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>r9999 pipeline trace</title>
+<style>
+ :root{--bg:#12141a;--fg:#e6e8ee;--dim:#8b93a7;--grid:#232734;
+       --F:#4c8dff;--A:#c678dd;--C:#e5c07b;--R:#57c98a;--M:#7f8aa3;--accent:#57c98a}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--fg);
+      font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+ header{padding:14px 18px;border-bottom:1px solid var(--grid);
+        display:flex;gap:22px;align-items:baseline;flex-wrap:wrap}
+ h1{font-size:15px;margin:0;letter-spacing:.02em}
+ .legend{color:var(--dim);display:flex;gap:14px;flex-wrap:wrap}
+ .k{display:inline-flex;gap:5px;align-items:center}
+ .sw{width:11px;height:11px;border-radius:2px;display:inline-block}
+ #wrap{overflow:auto;max-height:calc(100vh - 62px)}
+ table{border-collapse:collapse;white-space:nowrap}
+ th{position:sticky;top:0;background:var(--bg);color:var(--dim);
+    font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--grid)}
+ td{padding:0 2px;height:19px}
+ td.insn{position:sticky;left:0;background:var(--bg);padding-right:14px;
+         border-right:1px solid var(--grid);color:var(--fg)}
+ td.insn .pc{color:var(--dim);margin-right:8px}
+ .cell{display:block;width:13px;text-align:center;border-radius:2px;
+       font-size:11px;font-weight:600;color:#12141a;background:var(--M)}
+ .Fc{background:var(--F)} .Ac{background:var(--A)}
+ .Cc{background:var(--C)} .Rc{background:var(--R)}
+ .span{background:var(--grid);display:block;height:3px;margin-top:8px}
+</style></head><body>
+<header>
+  <h1>r9999 &mdash; pipeline trace</h1>
+  <div class="legend">
+    <span class="k"><i class="sw" style="background:var(--F)"></i>Fetch</span>
+    <span class="k"><i class="sw" style="background:var(--A)"></i>Alloc</span>
+    <span class="k"><i class="sw" style="background:var(--C)"></i>Complete</span>
+    <span class="k"><i class="sw" style="background:var(--R)"></i>Retire</span>
+    <span class="k"><i class="sw" style="background:var(--M)"></i>Memory pipe (Q LSU entry, S issue, H hit, Z store data, K wake, ...)</span>
+    <span id="stats"></span>
+  </div>
+</header>
+<div id="wrap"></div>
+<script>
+var tableData = [{"str":"ffffffff8001cef8 lwc1 $f1, -4($a0)",uops:[{"uuid":"75798","events":{"411654":"F","411669":"A","411687":"Q","411688":"S","411690":"M","411691":"B","411711":"O","411712":"E","411713":"G","411714":"N","411716":"P","411716":"L","411717":"C","411721":"R"}}]},{"str":"ffffffff8001cefc sub.s $f1, $f1, $f5",uops:[{"uuid":"75799","events":{"411655":"F","411679":"A","411724":"C","411725":"R"}}]},{"str":"ffffffff8001cf00 addu $t9, $s0, $a0",uops:[{"uuid":"75800","events":{"411656":"F","411680":"A","411683":"S","411684":"C","411725":"R"}}]},{"str":"ffffffff8001cf04 lwc1 $f30, -4($t9)",uops:[{"uuid":"75801","events":{"411656":"F","411681":"A","411693":"Q","411694":"S","411699":"M","411700":"B","411719":"O","411720":"E","411721":"G","411722":"N","411724":"P","411724":"L","411726":"C","411727":"R"}}]},{"str":"ffffffff8001cf08 lwc1 $f0, -4($a2)",uops:[{"uuid":"75802","events":{"411657":"F","411685":"A","411702":"Q","411703":"S","411708":"M","411709":"B","411725":"O","411726":"Y","411727":"G","411728":"N","411728":"L","411729":"J","411730":"E","411731":"G","411732":"N","411734":"P","411734":"L","411735":"C","411736":"R"}}]},{"str":"ffffffff8001cf0c sub.s $f30, $f30, $f5",uops:[{"uuid":"75803","events":{"411658":"F","411687":"A","411733":"C","411736":"R"}}]},{"str":"ffffffff8001cf10 addu $a2, $s0, $a2",uops:[{"uuid":"75804","events":{"411659":"F","411688":"A","411691":"S","411692":"C","411737":"R"}}]},{"str":"ffffffff8001cf14 lwc1 $f31, -4($a2)",uops:[{"uuid":"75805","events":{"411660":"F","411688":"A","411712":"Q","411713":"S","411715":"M","411716":"B","411735":"O","411736":"Y","411737":"G","411738":"N","411738":"L","411739":"J","411740":"E","411741":"G","411742":"N","411744":"P","411744":"L","411745":"C","411746":"R"}}]},{"str":"ffffffff8001cf18 add.s $f0, $f0, $f1",uops:[{"uuid":"75806","events":{"411661":"F","411689":"A","411742":"C","411746":"R"}}]},{"str":"ffffffff8001cf1c addiu $a1, $a1, 2",uops:[{"uuid":"75807","events":{"411662":"F","411690":"A","411693":"S","411694":"C","411747":"R"}}]},{"str":"ffffffff8001cf20 addu $a2, $s0, $a2",uops:[{"uuid":"75808","events":{"411663":"F","411691":"A","411694":"S","411695":"C","411747":"R"}}]},{"str":"ffffffff8001cf24 add.s $f31, $f31, $f30",uops:[{"uuid":"75809","events":{"411664":"F","411692":"A","411752":"C","411753":"R"}}]},{"str":"ffffffff8001cf28 swc1 $f0, -4($a0)",uops:[{"uuid":"75810","events":{"411672":"F","411693":"A","411718":"Q","411719":"S","411743":"Z","411723":"C","411753":"R"}}]},{"str":"ffffffff8001cf2c addu $a0, $s0, $t9",uops:[{"uuid":"75811","events":{"411682":"F","411694":"A","411697":"S","411698":"C","411754":"R"}}]},{"str":"ffffffff8001cf30 bne $a3, $a1, 0x8001cef8",uops:[{"uuid":"75812","events":{"411683":"F","411695":"A","411698":"S","411699":"C","411754":"R"}}]},{"str":"ffffffff8001cf34 swc1 $f31, -4($t9)",uops:[{"uuid":"75813","events":{"411684":"F","411696":"A","411720":"Q","411721":"S","411753":"Z","411724":"C","411755":"R"}}]},{"str":"ffffffff8001cef8 lwc1 $f1, -4($a0)",uops:[{"uuid":"75814","events":{"411688":"F","411703":"A","411721":"Q","411722":"S","411724":"M","411725":"B","411745":"O","411746":"E","411747":"G","411748":"N","411750":"P","411750":"L","411751":"C","411755":"R"}}]},{"str":"ffffffff8001cefc sub.s $f1, $f1, $f5",uops:[{"uuid":"75815","events":{"411689":"F","411713":"A","411758":"C","411759":"R"}}]},{"str":"ffffffff8001cf00 addu $t9, $s0, $a0",uops:[{"uuid":"75816","events":{"411690":"F","411714":"A","411717":"S","411718":"C","411759":"R"}}]},{"str":"ffffffff8001cf04 lwc1 $f30, -4($t9)",uops:[{"uuid":"75817","events":{"411690":"F","411715":"A","411727":"Q","411728":"S","411733":"M","411734":"B","411753":"O","411754":"E","411755":"G","411756":"N","411758":"P","411758":"L","411760":"C","411761":"R"}}]},{"str":"ffffffff8001cf08 lwc1 $f0, -4($a2)",uops:[{"uuid":"75818","events":{"411691":"F","411719":"A","411736":"Q","411737":"S","411742":"M","411743":"B","411759":"O","411760":"Y","411761":"G","411762":"N","411762":"L","411763":"J","411764":"E","411765":"G","411766":"N","411768":"P","411768":"L","411769":"C","411770":"R"}}]},{"str":"ffffffff8001cf0c sub.s $f30, $f30, $f5",uops:[{"uuid":"75819","events":{"411692":"F","411721":"A","411767":"C","411770":"R"}}]},{"str":"ffffffff8001cf10 addu $a2, $s0, $a2",uops:[{"uuid":"75820","events":{"411693":"F","411722":"A","411725":"S","411726":"C","411771":"R"}}]},{"str":"ffffffff8001cf14 lwc1 $f31, -4($a2)",uops:[{"uuid":"75821","events":{"411694":"F","411722":"A","411746":"Q","411747":"S","411749":"M","411750":"B","411769":"O","411770":"Y","411771":"G","411772":"N","411772":"L","411773":"J","411774":"E","411775":"G","411776":"N","411778":"P","411778":"L","411779":"C","411780":"R"}}]},{"str":"ffffffff8001cf18 add.s $f0, $f0, $f1",uops:[{"uuid":"75822","events":{"411695":"F","411723":"A","411776":"C","411780":"R"}}]},{"str":"ffffffff8001cf1c addiu $a1, $a1, 2",uops:[{"uuid":"75823","events":{"411696":"F","411724":"A","411727":"S","411728":"C","411781":"R"}}]},{"str":"ffffffff8001cf20 addu $a2, $s0, $a2",uops:[{"uuid":"75824","events":{"411697":"F","411725":"A","411728":"S","411729":"C","411781":"R"}}]},{"str":"ffffffff8001cf24 add.s $f31, $f31, $f30",uops:[{"uuid":"75825","events":{"411698":"F","411726":"A","411786":"C","411787":"R"}}]},{"str":"ffffffff8001cf28 swc1 $f0, -4($a0)",uops:[{"uuid":"75826","events":{"411706":"F","411727":"A","411752":"Q","411753":"S","411777":"Z","411757":"C","411787":"R"}}]},{"str":"ffffffff8001cf2c addu $a0, $s0, $t9",uops:[{"uuid":"75827","events":{"411716":"F","411728":"A","411731":"S","411732":"C","411788":"R"}}]},{"str":"ffffffff8001cf30 bne $a3, $a1, 0x8001cef8",uops:[{"uuid":"75828","events":{"411717":"F","411729":"A","411732":"S","411733":"C","411788":"R"}}]},{"str":"ffffffff8001cf34 swc1 $f31, -4($t9)",uops:[{"uuid":"75829","events":{"411718":"F","411730":"A","411754":"Q","411755":"S","411787":"Z","411758":"C","411789":"R"}}]},{"str":"ffffffff8001cef8 lwc1 $f1, -4($a0)",uops:[{"uuid":"75830","events":{"411722":"F","411737":"A","411755":"Q","411756":"S","411758":"M","411759":"B","411779":"O","411780":"E","411781":"G","411782":"N","411784":"P","411784":"L","411785":"C","411789":"R"}}]}]
+;(function(){
+  var rows=[],minC=Infinity,maxC=-Infinity;
+  tableData.forEach(function(rec){
+    var u=rec.uops[0], ev=u.events, o={str:rec.str,uuid:u.uuid,ev:{}};
+    for(var c in ev){var n=+c; o.ev[n]=ev[c]; if(n<minC)minC=n; if(n>maxC)maxC=n;}
+    rows.push(o);
+  });
+  if(!rows.length){document.getElementById('wrap').textContent='no records';return;}
+  var span=maxC-minC+1;
+  if(span>4000){maxC=minC+4000;span=4001;}   /* keep the DOM sane */
+  document.getElementById('stats').textContent=
+     rows.length+' insns · cycles '+minC+'–'+maxC+' ('+span+')';
+  var h='<table><thead><tr><th>instruction</th>';
+  for(var c=minC;c<=maxC;c++) h+='<th>'+((c-minC)%10===0?(c-minC):'')+'</th>';
+  h+='</tr></thead><tbody>';
+  rows.forEach(function(r){
+    var parts=r.str.split(' '), pc=parts.shift();
+    h+='<tr><td class="insn"><span class="pc">'+pc.slice(-8)+'</span>'+parts.join(' ')+'</td>';
+    var f=null,l=null;
+    for(var c in r.ev){var n=+c; if(f===null||n<f)f=n; if(l===null||n>l)l=n;}
+    for(var c=minC;c<=maxC;c++){
+      var e=r.ev[c];
+      if(e) h+='<td><span class="cell '+e+'c">'+e+'</span></td>';
+      else if(c>f&&c<l) h+='<td><span class="span"></span></td>';
+      else h+='<td></td>';
+    }
+    h+='</tr>';
+  });
+  document.getElementById('wrap').innerHTML=h+'</tbody></table>';
+})();
+</script></body></html>

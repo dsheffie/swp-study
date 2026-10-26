@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s152: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s152 (interprocedural data flow analysis) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s151.html">s151</a> · next: <a href="s161.html">s161</a></div>
+<h1>s152</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">206,574</td><td class="r ">206,584</td></tr>
+  <tr><td>instructions</td><td class="r">252,943</td><td class="r">252,943</td></tr>
+  <tr><td>IPC</td><td class="r">1.224</td><td class="r ">1.224</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">106</td><td class="r">109</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">—</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>interprocedural data flow analysis / collecting information from a subroutine</p>
+<pre>      do 1 nl = 1,ntimes
+      do 10 i = 1,n
+         b(i) = d(i) * e(i)
+         call s152s(a,b,c,i)
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swpf&gt; Loop line 676 wasn&#x27;t pipelined because:
+#&lt;swpf&gt;       Function call in the loop body</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>80016130</code>–<code>8001616c</code>, 9900 trips.</p>
+<pre>80016130  lwc1 $f1,-4(s2)
+80016134  lwc1 $f0,-4(s3)
+80016138  sw s1,32(sp)
+8001613c  mul.s $f0,$f0,$f1
+80016140  move a0,s5
+80016144  move a1,s0
+80016148  move a2,s6
+8001614c  addiu a3,sp,32
+80016150  move t9,s8
+80016154  bal 80016280 &lt;s152s_&gt;
+80016158  swc1 $f0,-4(s4)
+8001615c  addiu s3,s3,4
+80016160  addiu s2,s2,4
+80016164  addiu s1,s1,1
+80016168  bne s7,s1,80016130 &lt;s152_+0x11c&gt;
+8001616c  addiu s4,s4,4</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>800196a0</code>–<code>800196dc</code>, 9900 trips.</p>
+<pre>800196a0  lwc1 $f1,-4(s2)
+800196a4  lwc1 $f0,-4(s3)
+800196a8  sw s1,32(sp)
+800196ac  mul.s $f0,$f0,$f1
+800196b0  move a0,s5
+800196b4  move a1,s0
+800196b8  move a2,s6
+800196bc  addiu a3,sp,32
+800196c0  move t9,s8
+800196c4  bal 800197f0 &lt;s152s_&gt;
+800196c8  swc1 $f0,-4(s4)
+800196cc  addiu s3,s3,4
+800196d0  addiu s2,s2,4
+800196d4  addiu s1,s1,1
+800196d8  bne s7,s1,800196a0 &lt;s152_+0x11c&gt;
+800196dc  addiu s4,s4,4</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s152_swp_focus.html">open</a> · <a href="../pipetraces/s152_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s152_swp_focus.html" title="s152 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s152_noswp_focus.html">open</a> · <a href="../pipetraces/s152_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s152_noswp_focus.html" title="s152 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s151.html">s151</a> · next: <a href="s161.html">s161</a></footer>
+</main>
+</body>
+</html>

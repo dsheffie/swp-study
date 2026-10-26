@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s452: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s452 (intrinsic functions) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s451.html">s451</a> · next: <a href="s453.html">s453</a></div>
+<h1>s452</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">68,196</td><td class="r ">67,436</td></tr>
+  <tr><td>instructions</td><td class="r">95,329</td><td class="r">86,128</td></tr>
+  <tr><td>IPC</td><td class="r">1.398</td><td class="r ">1.277</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">10</td><td class="r">7</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">1</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">8.25</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>intrinsic functions / seq function</p>
+<pre>      do 1 nl = 1,ntimes
+      do 10 i = 1, n
+         a(i) = b(i) + c(i) * float(i)
+ 10   continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+ 1    continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 3024 steady state
+#&lt;swps&gt;    25 estimated iterations before pipelining
+#&lt;swps&gt;     4 unrollings before pipelining
+#&lt;swps&gt;    33 cycles per 4 iterations
+#&lt;swps&gt;    12 flops        ( 36% of peak)
+#&lt;swps&gt;     4 fmuls        ( 44% of peak)
+#&lt;swps&gt;     4 fadds        ( 34% of peak)
+#&lt;swps&gt;    12 mem refs     ( 36% of peak)
+#&lt;swps&gt;     5 integer ops  ( 15% of peak)
+#&lt;swps&gt;    33 instructions (100% of peak)
+#&lt;swps&gt;     1 short trip threshold
+#&lt;swps&gt;    14 integer registers used.
+#&lt;swps&gt;    14 float registers used.</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>80028b20</code>–<code>80028bb4</code>, 2400 trips.</p>
+<pre>80028b20  mtc1 a0,$f10
+80028b24  nop
+80028b28  cvt.s.w $f10,$f10
+80028b2c  addiu at,a0,3
+80028b30  mtc1 at,$f8
+80028b34  lwc1 $f11,-4(a2)
+80028b38  cvt.s.w $f8,$f8
+80028b3c  lwc1 $f9,8(a2)
+80028b40  mul.s $f10,$f10,$f11
+80028b44  mul.s $f8,$f8,$f9
+80028b48  addiu ra,a0,2
+80028b4c  mtc1 ra,$f7
+80028b50  nop
+80028b54  cvt.s.w $f7,$f7
+80028b58  addiu t9,a0,1
+80028b5c  mtc1 t9,$f5
+80028b60  lwc1 $f9,4(a2)
+80028b64  addiu a1,a1,16
+80028b68  cvt.s.w $f5,$f5
+80028b6c  mul.s $f7,$f7,$f9
+80028b70  addiu a2,a2,16
+80028b74  lwc1 $f6,-20(a1)
+80028b78  lwc1 $f9,-16(a2)
+80028b7c  lwc1 $f4,-8(a1)
+80028b80  add.s $f6,$f6,$f10
+80028b84  mul.s $f5,$f5,$f9
+80028b88  lwc1 $f3,-12(a1)
+80028b8c  add.s $f4,$f4,$f8
+80028b90  addiu a3,a3,16
+80028b94  lwc1 $f2,-16(a1)
+80028b98  add.s $f3,$f3,$f7
+80028b9c  addiu a0,a0,4
+80028ba0  swc1 $f6,-20(a3)
+80028ba4  add.s $f2,$f2,$f5
+80028ba8  swc1 $f4,-8(a3)
+80028bac  swc1 $f3,-12(a3)
+80028bb0  bne a4,a0,80028b20 &lt;s452_+0x12c&gt;
+80028bb4  swc1 $f2,-16(a3)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>80033ca4</code>–<code>80033e38</code>, 700 trips.</p>
+<pre>80033ca4  cvt.s.w $f10,$f10
+80033ca8  mul.s $f8,$f5,$f3
+80033cac  lwc1 $f4,0(a7)
+80033cb0  lwc1 $f3,-4(a6)
+80033cb4  mul.s $f6,$f2,$f1
+80033cb8  lwc1 $f1,16(a6)
+80033cbc  add.s $f5,$f4,$f9
+80033cc0  mul.s $f4,$f10,$f3
+80033cc4  lwc1 $f2,4(a7)
+80033cc8  add.s $f3,$f7,$f8
+80033ccc  mul.s $f9,$f0,$f1
+80033cd0  lwc1 $f1,-4(a7)
+80033cd4  add.s $f2,$f2,$f6
+80033cd8  addiu a5,a4,3
+80033cdc  mtc1 a2,$f0
+80033ce0  add.s $f1,$f1,$f4
+80033ce4  swc1 $f5,0(a3)
+80033ce8  swc1 $f2,4(a3)
+80033cec  cvt.s.w $f5,$f0
+80033cf0  addiu at,a4,1
+80033cf4  mtc1 at,$f0
+80033cf8  swc1 $f3,8(a3)
+80033cfc  lwc1 $f3,24(a6)
+80033d00  cvt.s.w $f8,$f0
+80033d04  addiu a2,a4,2
+80033d08  mtc1 v0,$f0
+80033d0c  lwc1 $f7,24(a7)
+80033d10  addiu a1,a4,4
+80033d14  cvt.s.w $f2,$f0
+80033d18  mtc1 a1,$f10
+80033d1c  swc1 $f1,-4(a3)
+80033d20  beq v1,a0,80033e44 &lt;s452_+0x3f8&gt;
+80033d24  lwc1 $f1,20(a6)
+80033d28  cvt.s.w $f4,$f12
+80033d2c  mul.s $f6,$f5,$f3
+80033d30  lwc1 $f3,16(a7)
+80033d34  lwc1 $f0,12(a6)
+80033d38  mul.s $f2,$f2,$f1
+80033d3c  lwc1 $f1,32(a6)
+80033d40  add.s $f5,$f3,$f9
+80033d44  mul.s $f4,$f4,$f0
+80033d48  lwc1 $f0,20(a7)
+80033d4c  add.s $f3,$f7,$f6
+80033d50  mul.s $f9,$f8,$f1
+80033d54  lwc1 $f1,12(a7)
+80033d58  add.s $f2,$f0,$f2
+80033d5c  addiu v0,a4,7
+80033d60  mtc1 a5,$f0
+80033d64  add.s $f1,$f1,$f4
+80033d68  swc1 $f5,16(a3)
+80033d6c  swc1 $f2,20(a3)
+80033d70  cvt.s.w $f5,$f0
+80033d74  addiu at,a4,5
+80033d78  mtc1 at,$f0
+80033d7c  swc1 $f3,24(a3)
+80033d80  lwc1 $f3,40(a6)
+80033d84  cvt.s.w $f8,$f0
+80033d88  addiu at,a4,6
+80033d8c  mtc1 a2,$f0
+80033d90  lwc1 $f7,40(a7)
+80033d94  addiu a0,a4,8
+80033d98  cvt.s.w $f2,$f0
+80033d9c  mtc1 a0,$f12
+80033da0  swc1 $f1,12(a3)
+80033da4  beq v1,a4,80033b38 &lt;s452_+0xec&gt;
+80033da8  lwc1 $f1,36(a6)
+80033dac  cvt.s.w $f4,$f11
+80033db0  mul.s $f6,$f5,$f3
+80033db4  lwc1 $f3,32(a7)
+80033db8  lwc1 $f0,28(a6)
+80033dbc  mul.s $f2,$f2,$f1
+80033dc0  lwc1 $f1,48(a6)
+80033dc4  add.s $f5,$f3,$f9
+80033dc8  mul.s $f4,$f4,$f0
+80033dcc  lwc1 $f0,36(a7)
+80033dd0  add.s $f3,$f7,$f6
+80033dd4  mul.s $f9,$f8,$f1
+80033dd8  lwc1 $f1,28(a7)
+80033ddc  add.s $f2,$f0,$f2
+80033de0  addiu a2,a4,11
+80033de4  mtc1 v0,$f0
+80033de8  add.s $f1,$f1,$f4
+80033dec  swc1 $f5,32(a3)
+80033df0  swc1 $f2,36(a3)
+80033df4  cvt.s.w $f5,$f0
+80033df8  addiu v0,a4,9
+80033dfc  mtc1 v0,$f0
+80033e00  swc1 $f3,40(a3)
+80033e04  lwc1 $f3,56(a6)
+80033e08  cvt.s.w $f0,$f0
+80033e0c  addiu v0,a4,10
+80033e10  mtc1 at,$f2
+80033e14  lwc1 $f7,56(a7)
+80033e18  addiu a4,a4,12
+80033e1c  cvt.s.w $f2,$f2
+80033e20  mtc1 a4,$f11
+80033e24  swc1 $f1,28(a3)
+80033e28  addiu a3,a3,48
+80033e2c  addiu a6,a6,48
+80033e30  addiu a7,a7,48
+80033e34  bne v1,a1,80033ca4 &lt;s452_+0x258&gt;
+80033e38  lwc1 $f1,4(a6)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s452_swp_focus.html">open</a> · <a href="../pipetraces/s452_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s452_swp_focus.html" title="s452 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s452_noswp_focus.html">open</a> · <a href="../pipetraces/s452_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s452_noswp_focus.html" title="s452 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s451.html">s451</a> · next: <a href="s453.html">s453</a></footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s4115: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s4115 (indirect addressing) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s4114.html">s4114</a> · next: <a href="s4116.html">s4116</a></div>
+<h1>s4115</h1>
+<p class="lede">SWP is 1.04× slower.</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">67,228</td><td class="r bad">69,752</td></tr>
+  <tr><td>instructions</td><td class="r">77,930</td><td class="r">75,629</td></tr>
+  <tr><td>IPC</td><td class="r">1.159</td><td class="r bad">1.084</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">5</td><td class="r">9</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">7.25</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>indirect addressing / sparse dot product</p>
+<pre>      do 1 nl = 1,ntimes
+      sum = 0.
+      do 10 i = 1, n
+         sum = sum + a(i) * b(ip(i))
+   10 continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+   1  continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 3245 steady state
+#&lt;swps&gt;    25 estimated iterations before pipelining
+#&lt;swps&gt;     4 unrollings before pipelining
+#&lt;swps&gt;    29 cycles per 4 iterations
+#&lt;swps&gt;     8 flops        ( 27% of peak)
+#&lt;swps&gt;     4 fmuls        ( 50% of peak)
+#&lt;swps&gt;     4 fadds        ( 38% of peak)
+#&lt;swps&gt;    12 mem refs     ( 41% of peak)
+#&lt;swps&gt;     9 integer ops  ( 31% of peak)
+#&lt;swps&gt;    29 instructions (100% of peak)
+#&lt;swps&gt;     2 short trip threshold
+#&lt;swps&gt;     7 integer registers used.
+#&lt;swps&gt;     9 float registers used.</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>8002a594</code>–<code>8002a60c</code>, 2400 trips.</p>
+<pre>8002a594  lw t0,0(a0)
+8002a598  lwc1 $f29,8(a2)
+8002a59c  lwc1 $f31,4(a2)
+8002a5a0  sll t0,t0,0x2
+8002a5a4  addu t0,s0,t0
+8002a5a8  lwc1 $f1,-4(t0)
+8002a5ac  lw t0,-4(a0)
+8002a5b0  lw a6,8(a0)
+8002a5b4  lwc1 $f2,-4(a2)
+8002a5b8  sll t0,t0,0x2
+8002a5bc  addu t0,s0,t0
+8002a5c0  lwc1 $f3,-4(t0)
+8002a5c4  lw a7,4(a0)
+8002a5c8  lwc1 $f0,0(a2)
+8002a5cc  mul.s $f2,$f2,$f3
+8002a5d0  sll a7,a7,0x2
+8002a5d4  addu a7,s0,a7
+8002a5d8  mul.s $f0,$f0,$f1
+8002a5dc  lwc1 $f1,-4(a7)
+8002a5e0  sll a6,a6,0x2
+8002a5e4  addu a6,s0,a6
+8002a5e8  mul.s $f31,$f31,$f1
+8002a5ec  lwc1 $f1,-4(a6)
+8002a5f0  add.s $f28,$f28,$f2
+8002a5f4  mul.s $f29,$f29,$f1
+8002a5f8  add.s $f28,$f28,$f0
+8002a5fc  add.s $f28,$f28,$f31
+8002a600  addiu a0,a0,16
+8002a604  addiu a2,a2,16
+8002a608  bne a2,a1,8002a594 &lt;s4115_+0x124&gt;
+8002a60c  add.s $f28,$f28,$f29</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>800363f8</code>–<code>800364e4</code>, 1100 trips.</p>
+<pre>800363f8  lw v0,28(a0)
+800363fc  lw at,16(a0)
+80036400  mul.s $f6,$f6,$f2
+80036404  add.s $f0,$f0,$f5
+80036408  lwc1 $f3,16(a1)
+8003640c  sll at,at,0x2
+80036410  addu at,a2,at
+80036414  add.s $f2,$f0,$f1
+80036418  lwc1 $f0,-4(at)
+8003641c  lw at,8(a0)
+80036420  lwc1 $f1,8(a1)
+80036424  mul.s $f5,$f3,$f0
+80036428  sll at,at,0x2
+8003642c  addu at,a2,at
+80036430  lwc1 $f0,-4(at)
+80036434  lwc1 $f4,28(a1)
+80036438  lw v1,20(a0)
+8003643c  mul.s $f0,$f1,$f0
+80036440  lwc1 $f3,20(a1)
+80036444  sll at,v0,0x2
+80036448  addu v0,a2,at
+8003644c  sll at,v1,0x2
+80036450  addu at,a2,at
+80036454  lwc1 $f1,-4(at)
+80036458  add.s $f0,$f2,$f0
+8003645c  lwc1 $f2,-4(v0)
+80036460  mul.s $f1,$f3,$f1
+80036464  beq a1,a3,80036254 &lt;s4115_+0xe8&gt;
+80036468  add.s $f0,$f0,$f6
+8003646c  lw v0,44(a0)
+80036470  lw at,32(a0)
+80036474  mul.s $f4,$f4,$f2
+80036478  add.s $f0,$f0,$f5
+8003647c  lwc1 $f2,32(a1)
+80036480  sll at,at,0x2
+80036484  addu at,a2,at
+80036488  add.s $f3,$f0,$f1
+8003648c  lwc1 $f0,-4(at)
+80036490  lw at,24(a0)
+80036494  lwc1 $f1,24(a1)
+80036498  mul.s $f5,$f2,$f0
+8003649c  sll at,at,0x2
+800364a0  addu at,a2,at
+800364a4  lwc1 $f0,-4(at)
+800364a8  lwc1 $f6,44(a1)
+800364ac  lw v1,36(a0)
+800364b0  mul.s $f2,$f1,$f0
+800364b4  lwc1 $f1,36(a1)
+800364b8  sll at,v0,0x2
+800364bc  addu v0,a2,at
+800364c0  sll at,v1,0x2
+800364c4  addu at,a2,at
+800364c8  lwc1 $f0,-4(at)
+800364cc  add.s $f3,$f3,$f2
+800364d0  lwc1 $f2,-4(v0)
+800364d4  mul.s $f1,$f1,$f0
+800364d8  addiu a0,a0,32
+800364dc  addiu a1,a1,32
+800364e0  bne a1,a4,800363f8 &lt;s4115_+0x28c&gt;
+800364e4  add.s $f0,$f3,$f4</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s4115_swp_focus.html">open</a> · <a href="../pipetraces/s4115_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s4115_swp_focus.html" title="s4115 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s4115_noswp_focus.html">open</a> · <a href="../pipetraces/s4115_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s4115_noswp_focus.html" title="s4115 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s4114.html">s4114</a> · next: <a href="s4116.html">s4116</a></footer>
+</main>
+</body>
+</html>

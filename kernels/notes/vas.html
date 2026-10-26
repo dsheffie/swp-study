@@ -1,0 +1,33 @@
+<!-- title: vas: SWP puts the store addresses on the critical path -->
+<!-- lede: SWP is 1.18× slower with no branch-likely and almost no mispredicts. The loss comes from how r9999's LSU orders
+loads behind stores. -->
+<h2>What happens</h2>
+<p>Two LSU properties combine:</p>
+<ul>
+  <li><b>No load-past-store speculation.</b> A load may not issue while any older store hasn't done its address pass
+    (<code>exec.sv</code>, LSU ordering rule), so memory ops effectively issue in program order, one per cycle.</li>
+  <li><b>An 8-entry LSU in which a store holds its slot until it retires and commits.</b></li>
+</ul>
+<p>The SWP code issues 8 loads (4× <code>b</code>, 4× <code>ip</code>), then 8 <code>sll</code>/<code>addu</code> to turn
+<code>ip</code> into addresses, then 4 stores. The loads, plus the previous group's stores, fill the LSU, and the 4-entry mem uop queue
+backs up behind it. In-order allocation stalls, so the address arithmetic, fetched at cycle 4, isn't allocated until cycle 13. The stores'
+addresses are therefore late, and the next group's <code>b</code> loads, whose addresses are already known, wait behind those stores:</p>
+<pre>80037ebc  lwc1 $f0, ($a2)       F   3 A   8 C  19   Q15  S16  H18
+80037ec0  sll $at, $at, 2       F   4 A  13 C  17                  &lt;- fetched at 4, allocated at 13
+ ...
+80037edc  addu $at, $t0, $at    F   7 A  17 C  24
+80037ee0  swc1 $f0, -4($at)     F   8 A  17 C  26   Q18  Z21  S23   &lt;- address pass waits on the addu
+ ...
+80037ef8  lwc1 $f2, 0x1c($a2)   F  17 A  20 C  31   Q23  S28  H30   &lt;- known address, still waits for the older stores</pre>
+<p>The no-SWP code has the same instructions interleaved (<code>lw</code>, <code>sll</code>, <code>addu</code>, <code>lwc1</code>, …).
+The address math is allocated before the LSU fills, and each store's address is ready about as soon as its data:</p>
+<pre>8002b670  lw $v0, -0x14($a0)     F  10 A  15 C  23   Q19  S20  H22
+8002b678  lwc1 $f4, -0x14($a2)   F  11 A  17 C  24   Q20  S21  H23
+8002b684  swc1 $f4, -4($v0)      F  12 A  19 C  28   Q22  S25  Z28
+8002b688  swc1 $f3, -4($at)      F  13 A  20 C  29   Q23  Z25  S26
+8002b640  lw $t9, -8($a0)        F  17 A  24 C  32   Q26  S29  H31   &lt;- next trip follows directly</pre>
+<p>s491, also a scatter (1.12×), is probably the same story.</p>
+
+<div class="verdict"><p>The schedule is what MIPSpro intended for an in-order R4000. On r9999 it hits the LSU's capacity and ordering
+limits. Memory-dependence speculation, or freeing a store's LSU slot when it moves to the store buffer, would remove the loss.
+<a href="s241.html">s241</a> is the same bottleneck viewed from the other side.</p></div>

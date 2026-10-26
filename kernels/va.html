@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>va: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC va (control loops) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s4121.html">s4121</a> · next: <a href="vag.html">vag</a></div>
+<h1>va</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">33,086</td><td class="r ">33,794</td></tr>
+  <tr><td>instructions</td><td class="r">27,827</td><td class="r">24,326</td></tr>
+  <tr><td>IPC</td><td class="r">0.841</td><td class="r ">0.720</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">7</td><td class="r">9</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">2.25</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>control loops / vector assignment</p>
+<pre>      do 1 nl = 1,ntimes
+      do 10 i = 1,n
+         a(i) = b(i)
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 3340 steady state
+#&lt;swps&gt;    25 estimated iterations before pipelining
+#&lt;swps&gt;     4 unrollings before pipelining
+#&lt;swps&gt;     9 cycles per 4 iterations
+#&lt;swps&gt;     8 mem refs     ( 88% of peak)
+#&lt;swps&gt;     1 integer op   ( 11% of peak)
+#&lt;swps&gt;     9 instructions (100% of peak)
+#&lt;swps&gt;     1 short trip threshold
+#&lt;swps&gt;     7 integer registers used.
+#&lt;swps&gt;     5 float registers used.</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>8002b0d8</code>–<code>8002b100</code>, 2400 trips.</p>
+<pre>8002b0d8  addiu a0,a0,16
+8002b0dc  lwc1 $f4,8(a2)
+8002b0e0  addiu a2,a2,16
+8002b0e4  lwc1 $f3,-12(a2)
+8002b0e8  swc1 $f4,-8(a0)
+8002b0ec  lwc1 $f2,-16(a2)
+8002b0f0  swc1 $f3,-12(a0)
+8002b0f4  lwc1 $f1,-20(a2)
+8002b0f8  swc1 $f2,-16(a0)
+8002b0fc  bne a2,a1,8002b0d8 &lt;va_+0x104&gt;
+8002b100  swc1 $f1,-20(a0)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>800376a0</code>–<code>80037758</code>, 400 trips.</p>
+<pre>800376a0  lwc1 $f4,24(a2)
+800376a4  lwc1 $f0,4(a2)
+800376a8  swc1 $f3,8(a1)
+800376ac  lwc1 $f1,0(a2)
+800376b0  swc1 $f0,4(a1)
+800376b4  lwc1 $f0,-4(a2)
+800376b8  swc1 $f1,0(a1)
+800376bc  beq a2,a0,80037784 &lt;va_+0x294&gt;
+800376c0  swc1 $f0,-4(a1)
+800376c4  lwc1 $f2,40(a2)
+800376c8  lwc1 $f0,20(a2)
+800376cc  swc1 $f4,24(a1)
+800376d0  lwc1 $f1,16(a2)
+800376d4  swc1 $f0,20(a1)
+800376d8  lwc1 $f0,12(a2)
+800376dc  swc1 $f1,16(a1)
+800376e0  beq a2,v1,80037774 &lt;va_+0x284&gt;
+800376e4  swc1 $f0,12(a1)
+800376e8  lwc1 $f3,56(a2)
+800376ec  lwc1 $f0,36(a2)
+800376f0  swc1 $f2,40(a1)
+800376f4  lwc1 $f1,32(a2)
+800376f8  swc1 $f0,36(a1)
+800376fc  lwc1 $f0,28(a2)
+80037700  swc1 $f1,32(a1)
+80037704  beq a2,v0,80037764 &lt;va_+0x274&gt;
+80037708  swc1 $f0,28(a1)
+8003770c  lwc1 $f2,72(a2)
+80037710  lwc1 $f0,52(a2)
+80037714  swc1 $f3,56(a1)
+80037718  lwc1 $f1,48(a2)
+8003771c  swc1 $f0,52(a1)
+80037720  lwc1 $f0,44(a2)
+80037724  swc1 $f1,48(a1)
+80037728  beq a2,at,800375cc &lt;va_+0xdc&gt;
+8003772c  swc1 $f0,44(a1)
+80037730  lwc1 $f3,88(a2)
+80037734  lwc1 $f1,68(a2)
+80037738  swc1 $f2,72(a1)
+8003773c  lwc1 $f0,64(a2)
+80037740  swc1 $f1,68(a1)
+80037744  lwc1 $f1,60(a2)
+80037748  swc1 $f0,64(a1)
+8003774c  addiu a1,a1,80
+80037750  addiu a2,a2,80
+80037754  bne a2,a3,800376a0 &lt;va_+0x1b0&gt;
+80037758  swc1 $f1,-20(a1)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/va_swp_focus.html">open</a> · <a href="../pipetraces/va_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/va_swp_focus.html" title="va SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/va_noswp_focus.html">open</a> · <a href="../pipetraces/va_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/va_noswp_focus.html" title="va No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s4121.html">s4121</a> · next: <a href="vag.html">vag</a></footer>
+</main>
+</body>
+</html>

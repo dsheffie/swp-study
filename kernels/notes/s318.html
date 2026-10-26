@@ -1,0 +1,28 @@
+<!-- title: s318: a not-taken branch-likely always restarts -->
+<!-- lede: SWP is 5.5× slower. MIPSpro's R4000 schedule predicates with branch-likely, and on an R10000-class core like r9999 every not-taken branch-likely is a pipeline restart. -->
+<h2>What happens</h2>
+<p>The R4000 has no conditional moves (<code>movn</code>/<code>movz</code>/<code>movt</code> arrived with MIPS IV), so MIPSpro
+if-converts the update with branch-likely: <code>bc1tl .+8</code> executes its delay slot only when the FP condition is true,
+and the next PC is <code>.+8</code> either way.</p>
+<p>r9999 handles branch-likely the way the R10000 does: "Branch Likely instructions are always predicted as taken, which also
+means the instruction in the delay slot of the Branch Likely instruction will always be speculatively executed"
+(<i>MIPS R10000 Microprocessor User's Manual</i> v2.0, ch. 1, p. 14). A not-taken branch-likely nullifies its delay slot by
+restarting the pipeline. Every likely form in <code>exec.sv</code> has</p>
+<pre>t_mispred_br = (int_uop.br_pred != t_take_br) || !t_take_br;</pre>
+<p>so a not-taken branch-likely is a misprediction whatever was predicted. For a max reduction the predicate is almost always
+false. All four steady-state <code>bc1tl</code> restart on nearly every execution, 4900 times each. The next instruction
+is fetched about 17 cycles after the branch:</p>
+<pre>8002cff8  bc1tl 0x8002d000   F   1 A   6 C  13 R  15
+8002d000  addiu $at,$at,1    F  18 A  25 C  29 R  30     &lt;- fetch restarts after the bc1tl resolves
+8002d004  abs.s $f2,$f2      F  18 A  25 C  29 R  30
+8002d008  bc1tl 0x8002d010   F  19 A  26 C  30 R  31
+8002d010  beq $a1,$at,...    F  34 A  40 C  44 R  45     &lt;- and again</pre>
+<p>Each trip handles 2 elements with 4 restarts and takes about 72 cycles. The nullified delay slots never retire, so they don't
+appear in the trace. The no-SWP loop's ordinary <code>bc1f</code> branches are learned by the predictor, fetch runs well ahead,
+and that loop is limited instead by its FP dependence chain: <code>c.lt.s</code> completes every 12 cycles per 2 elements.</p>
+<p>s3110, s273 and s315 lose to SWP the same way.</p>
+
+<div class="verdict"><p>Not a scheduling problem, and not an r9999 bug: this is R4000-tuned code meeting documented R10000
+branch-likely behavior. MIPSpro avoids it when targeting the R10000. With <code>-mips4 -r10000</code>, s318's SWP loop has no
+branch-likely at all and uses 10 conditional moves (<code>movt</code>/<code>movf</code>/<code>movn</code>/<code>movz</code>)
+instead (<code>~/swp/out/tsvc_f_r10000.s</code> in the study's build area).</p></div>

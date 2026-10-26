@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>vas: LSU ordering loss</title>
-<meta name="description" content="TSVC vas on r9999: the SWP schedule puts scatter-store addresses on the critical path of an in-order-issuing 8-entry LSU.">
+<title>vas: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC vas (control loops) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
 <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 <main class="wide">
-<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a></div>
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="vag.html">vag</a> · next: <a href="vif.html">vif</a></div>
 <h1>vas: SWP puts the store addresses on the critical path</h1>
 <p class="lede">SWP is 1.18× slower with no branch-likely and almost no mispredicts. The loss comes from how r9999's LSU orders
 loads behind stores.</p>
@@ -21,27 +21,37 @@ loads behind stores.</p>
   <tr><td>instructions</td><td class="r">57,828</td><td class="r">55,427</td></tr>
   <tr><td>IPC</td><td class="r">1.328</td><td class="r bad">1.082</td></tr>
   <tr><td>mispredicts in the kernel</td><td class="r">7</td><td class="r">11</td></tr>
-  <tr><td>steady state, cycles per 4 elements</td><td class="r">16</td><td class="r bad">≈19</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">5.25</td></tr>
 </table>
 </div>
 
 <h2>The kernel</h2>
-<p>A scatter: each element of <code>b</code> is stored to an index read from <code>ip</code>.</p>
-<pre>do 10 i = 1,n
-   a(ip(i)) = b(i)
-10 continue</pre>
-<p>MIPSpro's SWP notes. 21 cycles per 4 iterations is MIPSpro's own estimate for its R4000 schedule:</p>
-<pre>#&lt;swps&gt;    25 estimated iterations before pipelining
+<p>control loops / vector assignment, scatter</p>
+<pre>      do 1 nl = 1,ntimes
+      do 10 i = 1,n
+         a(ip(i)) = b(i)
+  10  continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+  1   continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swps&gt; Pipelined loop line 3386 steady state
+#&lt;swps&gt;    25 estimated iterations before pipelining
 #&lt;swps&gt;     4 unrollings before pipelining
 #&lt;swps&gt;    21 cycles per 4 iterations
 #&lt;swps&gt;    12 mem refs     ( 57% of peak)
 #&lt;swps&gt;     9 integer ops  ( 42% of peak)
-#&lt;swps&gt;    21 instructions (100% of peak)</pre>
+#&lt;swps&gt;    21 instructions (100% of peak)
+#&lt;swps&gt;     2 short trip threshold
+#&lt;swps&gt;    10 integer registers used.
+#&lt;swps&gt;     4 float registers used.</pre>
 
-<h2>The two loops</h2>
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
 <div class="pair">
 <div>
-<h3>No SWP: 4× unrolled, address math interleaved with the loads</h3>
+<h3>No SWP</h3>
+<p><code>8002b63c</code>–<code>8002b694</code>, 2400 trips.</p>
 <pre>8002b63c  addiu a0,a0,16
 8002b640  lw t9,-8(a0)
 8002b644  addiu a2,a2,16
@@ -67,7 +77,8 @@ loads behind stores.</p>
 8002b694  swc1 $f1,-4(t9)</pre>
 </div>
 <div>
-<h3>SWP: two replications; per group, 8 loads, then address math, then 4 stores</h3>
+<h3>SWP</h3>
+<p><code>80037ea4</code>–<code>80037f50</code>, 1100 trips.</p>
 <pre>80037ea4  lwc1 $f3,12(a2)
 80037ea8  lw v1,8(a3)
 80037eac  lwc1 $f2,8(a2)
@@ -147,18 +158,17 @@ limits. Memory-dependence speculation, or freeing a store's LSU slot when it mov
 <a href="s241.html">s241</a> is the same bottleneck viewed from the other side.</p></div>
 
 <h2>Pipetraces</h2>
-<p>Two steady-state loop trips of each version (F fetch, A allocate, C complete, R retire; grey = memory-pipe events,
-with S also marking ALU issue). Scroll inside each frame.</p>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
 <div class="trace">
-  <div class="bar"><h3>SWP: 2 trips, 16 elements</h3><span><a href="../pipetraces/vas_swp_focus.html">open</a> · <a href="../pipetraces/vas_swp.html">420-instruction window</a></span></div>
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/vas_swp_focus.html">open</a> · <a href="../pipetraces/vas_swp.html">420-instruction window</a></span></div>
   <iframe src="../pipetraces/vas_swp_focus.html" title="vas SWP pipetrace" loading="lazy"></iframe>
 </div>
 <div class="trace">
-  <div class="bar"><h3>No SWP: 4 trips, 16 elements</h3><span><a href="../pipetraces/vas_noswp_focus.html">open</a> · <a href="../pipetraces/vas_noswp.html">420-instruction window</a></span></div>
-  <iframe src="../pipetraces/vas_noswp_focus.html" title="vas no-SWP pipetrace" loading="lazy"></iframe>
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/vas_noswp_focus.html">open</a> · <a href="../pipetraces/vas_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/vas_noswp_focus.html" title="vas No SWP pipetrace" loading="lazy"></iframe>
 </div>
-
-<footer><a href="../index.html">← all kernels</a> · previous: <a href="s318.html">s318</a> · next: <a href="s241.html">s241</a></footer>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="vag.html">vag</a> · next: <a href="vif.html">vif</a></footer>
 </main>
 </body>
 </html>

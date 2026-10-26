@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>s122: MIPSpro SWP on r9999</title>
+<meta name="description" content="TSVC s122 (induction variable recognition) compiled by MIPSpro 7.30 with and without software pipelining, run on the r9999 core.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a> · previous: <a href="s121.html">s121</a> · next: <a href="s123.html">s123</a></div>
+<h1>s122</h1>
+<p class="lede">SWP makes no measurable difference (within 3%).</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">51,284</td><td class="r ">51,616</td></tr>
+  <tr><td>instructions</td><td class="r">56,034</td><td class="r">56,034</td></tr>
+  <tr><td>IPC</td><td class="r">1.093</td><td class="r ">1.086</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">6</td><td class="r">10</td></tr>
+  <tr><td>branch-likely in the kernel (static)</td><td class="r">0</td><td class="r">0</td></tr>
+  <tr><td>MIPSpro estimate, R4000 cycles per iteration</td><td class="r">—</td><td class="r">—</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>induction variable recognition / variable lower and upper bound, and stride</p>
+<pre>      do 1 nl = 1,ntimes
+      j = 1
+      k = 0
+      do 10 i=n1,n,n3
+         k = k + j
+         a(i) = a(i) + b(n-k+1)
+   10 continue
+      call dummy(ld,n,a,b,c,d,e,aa,bb,cc,1.)
+   1  continue</pre>
+<h3>MIPSpro's software-pipelining notes</h3>
+<pre>#&lt;swpf&gt; Loop line 365 wasn&#x27;t pipelined -- MII (36) exceeded 22 (it is no longer profitable to pipeline this loop).</pre>
+
+<h2>The hot loop</h2>
+<p>The most frequently taken backward branch in the kernel's own code, found from the retired-instruction trace.</p>
+<div class="pair">
+<div>
+<h3>No SWP</h3>
+<p><code>80013b24</code>–<code>80013b78</code>, 2400 trips.</p>
+<pre>80013b24  lwc1 $f8,-4(a1)
+80013b28  lwc1 $f9,-4(a2)
+80013b2c  add.s $f8,$f8,$f9
+80013b30  lwc1 $f6,-8(a1)
+80013b34  swc1 $f8,-4(a2)
+80013b38  addu ra,s0,a2
+80013b3c  lwc1 $f7,-4(ra)
+80013b40  add.s $f6,$f6,$f7
+80013b44  lwc1 $f4,-12(a1)
+80013b48  swc1 $f6,-4(ra)
+80013b4c  addu ra,s0,ra
+80013b50  lwc1 $f5,-4(ra)
+80013b54  add.s $f4,$f4,$f5
+80013b58  lwc1 $f2,-16(a1)
+80013b5c  swc1 $f4,-4(ra)
+80013b60  addu ra,s0,ra
+80013b64  lwc1 $f3,-4(ra)
+80013b68  add.s $f2,$f2,$f3
+80013b6c  addiu a1,a1,-16
+80013b70  addu a2,s0,ra
+80013b74  bne a1,a0,80013b24 &lt;s122_+0x128&gt;
+80013b78  swc1 $f2,-4(ra)</pre>
+</div>
+<div>
+<h3>SWP</h3>
+<p><code>80015b88</code>–<code>80015bdc</code>, 2400 trips.</p>
+<pre>80015b88  lwc1 $f8,-4(a1)
+80015b8c  lwc1 $f9,-4(a2)
+80015b90  add.s $f8,$f8,$f9
+80015b94  lwc1 $f6,-8(a1)
+80015b98  swc1 $f8,-4(a2)
+80015b9c  addu ra,s0,a2
+80015ba0  lwc1 $f7,-4(ra)
+80015ba4  add.s $f6,$f6,$f7
+80015ba8  lwc1 $f4,-12(a1)
+80015bac  swc1 $f6,-4(ra)
+80015bb0  addu ra,s0,ra
+80015bb4  lwc1 $f5,-4(ra)
+80015bb8  add.s $f4,$f4,$f5
+80015bbc  lwc1 $f2,-16(a1)
+80015bc0  swc1 $f4,-4(ra)
+80015bc4  addu ra,s0,ra
+80015bc8  lwc1 $f3,-4(ra)
+80015bcc  add.s $f2,$f2,$f3
+80015bd0  addiu a1,a1,-16
+80015bd4  addu a2,s0,ra
+80015bd8  bne a1,a0,80015b88 &lt;s122_+0x128&gt;
+80015bdc  swc1 $f2,-4(ra)</pre>
+</div>
+</div>
+
+<h2>Pipetraces</h2>
+<p>Two trips of the hot loop from the middle of the run (F fetch, A allocate, C complete, R retire; grey = memory-pipe
+events, with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP</h3><span><a href="../pipetraces/s122_swp_focus.html">open</a> · <a href="../pipetraces/s122_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s122_swp_focus.html" title="s122 SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP</h3><span><a href="../pipetraces/s122_noswp_focus.html">open</a> · <a href="../pipetraces/s122_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/s122_noswp_focus.html" title="s122 No SWP pipetrace" loading="lazy"></iframe>
+</div>
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s121.html">s121</a> · next: <a href="s123.html">s123</a></footer>
+</main>
+</body>
+</html>
