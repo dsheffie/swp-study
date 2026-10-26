@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vas: LSU ordering loss</title>
+<meta name="description" content="TSVC vas on r9999: the SWP schedule puts scatter-store addresses on the critical path of an in-order-issuing 8-entry LSU.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="wide">
+<div class="crumb"><a href="../index.html">← MIPSpro SWP on r9999</a></div>
+<h1>vas: SWP puts the store addresses on the critical path</h1>
+<p class="lede">SWP is 1.18× slower with no branch-likely and almost no mispredicts. The loss comes from how r9999's LSU orders
+loads behind stores.</p>
+
+<div class="tablewrap">
+<table class="num">
+  <tr><th></th><th class="r">no SWP</th><th class="r">SWP</th></tr>
+  <tr><td>cycles (timed loop)</td><td class="r">43,532</td><td class="r bad">51,244</td></tr>
+  <tr><td>instructions</td><td class="r">57,828</td><td class="r">55,427</td></tr>
+  <tr><td>IPC</td><td class="r">1.328</td><td class="r bad">1.082</td></tr>
+  <tr><td>mispredicts in the kernel</td><td class="r">7</td><td class="r">11</td></tr>
+  <tr><td>steady state, cycles per 4 elements</td><td class="r">16</td><td class="r bad">≈19</td></tr>
+</table>
+</div>
+
+<h2>The kernel</h2>
+<p>A scatter: each element of <code>b</code> is stored to an index read from <code>ip</code>.</p>
+<pre>do 10 i = 1,n
+   a(ip(i)) = b(i)
+10 continue</pre>
+<p>MIPSpro's SWP notes. 21 cycles per 4 iterations is MIPSpro's own estimate for its R4000 schedule:</p>
+<pre>#&lt;swps&gt;    25 estimated iterations before pipelining
+#&lt;swps&gt;     4 unrollings before pipelining
+#&lt;swps&gt;    21 cycles per 4 iterations
+#&lt;swps&gt;    12 mem refs     ( 57% of peak)
+#&lt;swps&gt;     9 integer ops  ( 42% of peak)
+#&lt;swps&gt;    21 instructions (100% of peak)</pre>
+
+<h2>The two loops</h2>
+<div class="pair">
+<div>
+<h3>No SWP: 4× unrolled, address math interleaved with the loads</h3>
+<pre>8002b63c  addiu a0,a0,16
+8002b640  lw t9,-8(a0)
+8002b644  addiu a2,a2,16
+8002b648  lwc1 $f1,-8(a2)
+8002b64c  sll t9,t9,0x2
+8002b650  lw ra,-12(a0)
+8002b654  addu t9,s0,t9
+8002b658  lwc1 $f2,-12(a2)
+8002b65c  sll ra,ra,0x2
+8002b660  lw at,-16(a0)
+8002b664  addu ra,s0,ra
+8002b668  lwc1 $f3,-16(a2)
+8002b66c  sll at,at,0x2
+8002b670  lw v0,-20(a0)
+8002b674  addu at,s0,at
+8002b678  lwc1 $f4,-20(a2)
+8002b67c  sll v0,v0,0x2
+8002b680  addu v0,s0,v0
+8002b684  swc1 $f4,-4(v0)
+8002b688  swc1 $f3,-4(at)
+8002b68c  swc1 $f2,-4(ra)
+8002b690  bne a2,a1,8002b63c &lt;vas_+0x114&gt;
+8002b694  swc1 $f1,-4(t9)</pre>
+</div>
+<div>
+<h3>SWP: two replications; per group, 8 loads, then address math, then 4 stores</h3>
+<pre>80037ea4  lwc1 $f3,12(a2)
+80037ea8  lw v1,8(a3)
+80037eac  lwc1 $f2,8(a2)
+80037eb0  lw v0,4(a3)
+80037eb4  lwc1 $f1,4(a2)
+80037eb8  lw a1,0(a3)
+80037ebc  lwc1 $f0,0(a2)
+80037ec0  sll at,at,0x2
+80037ec4  addu a0,a4,at
+80037ec8  sll at,v1,0x2
+80037ecc  addu v1,a4,at
+80037ed0  sll at,v0,0x2
+80037ed4  addu v0,a4,at
+80037ed8  sll at,a1,0x2
+80037edc  addu at,a4,at
+80037ee0  swc1 $f0,-4(at)
+80037ee4  swc1 $f1,-4(v0)
+80037ee8  swc1 $f2,-4(v1)
+80037eec  swc1 $f3,-4(a0)
+80037ef0  beq a2,a5,80037d50 &lt;vas_+0xe4&gt;
+80037ef4  lw at,28(a3)
+80037ef8  lwc1 $f2,28(a2)
+80037efc  lw v1,24(a3)
+80037f00  lwc1 $f1,24(a2)
+80037f04  lw v0,20(a3)
+80037f08  lwc1 $f0,20(a2)
+80037f0c  lw a1,16(a3)
+80037f10  lwc1 $f3,16(a2)
+80037f14  sll at,at,0x2
+80037f18  addu a0,a4,at
+80037f1c  sll at,v1,0x2
+80037f20  addu v1,a4,at
+80037f24  sll at,v0,0x2
+80037f28  addu v0,a4,at
+80037f2c  sll at,a1,0x2
+80037f30  addu at,a4,at
+80037f34  swc1 $f3,-4(at)
+80037f38  swc1 $f0,-4(v0)
+80037f3c  swc1 $f1,-4(v1)
+80037f40  swc1 $f2,-4(a0)
+80037f44  addiu a3,a3,32
+80037f48  addiu a2,a2,32
+80037f4c  bne a2,a6,80037ea4 &lt;vas_+0x238&gt;
+80037f50  lw at,12(a3)</pre>
+</div>
+</div>
+
+<h2>What happens</h2>
+<p>Two LSU properties combine:</p>
+<ul>
+  <li><b>No load-past-store speculation.</b> A load may not issue while any older store hasn't done its address pass
+    (<code>exec.sv</code>, LSU ordering rule), so memory ops effectively issue in program order, one per cycle.</li>
+  <li><b>An 8-entry LSU in which a store holds its slot until it retires and commits.</b></li>
+</ul>
+<p>The SWP code issues 8 loads (4× <code>b</code>, 4× <code>ip</code>), then 8 <code>sll</code>/<code>addu</code> to turn
+<code>ip</code> into addresses, then 4 stores. The loads, plus the previous group's stores, fill the LSU, and the 4-entry mem uop queue
+backs up behind it. In-order allocation stalls, so the address arithmetic, fetched at cycle 4, isn't allocated until cycle 13. The stores'
+addresses are therefore late, and the next group's <code>b</code> loads, whose addresses are already known, wait behind those stores:</p>
+<pre>80037ebc  lwc1 $f0, ($a2)       F   3 A   8 C  19   Q15  S16  H18
+80037ec0  sll $at, $at, 2       F   4 A  13 C  17                  &lt;- fetched at 4, allocated at 13
+ ...
+80037edc  addu $at, $t0, $at    F   7 A  17 C  24
+80037ee0  swc1 $f0, -4($at)     F   8 A  17 C  26   Q18  Z21  S23   &lt;- address pass waits on the addu
+ ...
+80037ef8  lwc1 $f2, 0x1c($a2)   F  17 A  20 C  31   Q23  S28  H30   &lt;- known address, still waits for the older stores</pre>
+<p>The no-SWP code has the same instructions interleaved (<code>lw</code>, <code>sll</code>, <code>addu</code>, <code>lwc1</code>, …).
+The address math is allocated before the LSU fills, and each store's address is ready about as soon as its data:</p>
+<pre>8002b670  lw $v0, -0x14($a0)     F  10 A  15 C  23   Q19  S20  H22
+8002b678  lwc1 $f4, -0x14($a2)   F  11 A  17 C  24   Q20  S21  H23
+8002b684  swc1 $f4, -4($v0)      F  12 A  19 C  28   Q22  S25  Z28
+8002b688  swc1 $f3, -4($at)      F  13 A  20 C  29   Q23  Z25  S26
+8002b640  lw $t9, -8($a0)        F  17 A  24 C  32   Q26  S29  H31   &lt;- next trip follows directly</pre>
+<p>s491, also a scatter (1.12×), is probably the same story.</p>
+
+<div class="verdict"><p>The schedule is what MIPSpro intended for an in-order R4000. On r9999 it hits the LSU's capacity and ordering
+limits. Memory-dependence speculation, or freeing a store's LSU slot when it moves to the store buffer, would remove the loss.
+<a href="s241.html">s241</a> is the same bottleneck viewed from the other side.</p></div>
+
+<h2>Pipetraces</h2>
+<p>Two steady-state loop trips of each version (F fetch, A allocate, C complete, R retire; grey = memory-pipe events,
+with S also marking ALU issue). Scroll inside each frame.</p>
+<div class="trace">
+  <div class="bar"><h3>SWP: 2 trips, 16 elements</h3><span><a href="../pipetraces/vas_swp_focus.html">open</a> · <a href="../pipetraces/vas_swp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/vas_swp_focus.html" title="vas SWP pipetrace" loading="lazy"></iframe>
+</div>
+<div class="trace">
+  <div class="bar"><h3>No SWP: 4 trips, 16 elements</h3><span><a href="../pipetraces/vas_noswp_focus.html">open</a> · <a href="../pipetraces/vas_noswp.html">420-instruction window</a></span></div>
+  <iframe src="../pipetraces/vas_noswp_focus.html" title="vas no-SWP pipetrace" loading="lazy"></iframe>
+</div>
+
+<footer><a href="../index.html">← all kernels</a> · previous: <a href="s318.html">s318</a> · next: <a href="s241.html">s241</a></footer>
+</main>
+</body>
+</html>

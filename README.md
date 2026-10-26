@@ -11,8 +11,10 @@ Writeup and A/B pipetraces: https://dsheffie.github.io/swp-study/
 - `results/`: per-kernel Count from r9999 `ooo_core` (`rtl_*.log`, cycles/2) and from
   `interp_mips` (`interp_*.txt`, instructions), `ooo_core --branch` mispredict logs,
   `ipc_table.txt` (`tools/ipc.py .`) and `rank.txt` (`tools/rank.py .`).
-- `pipetraces/`: r9999 `gen_html` pipetraces of s318, vas and s241 with SWP on and off.
+- `kernels/`: one page per analyzed kernel (s318, vas, s241), with A/B pipetraces embedded.
+- `pipetraces/`: r9999 `gen_html` pipetraces of s318, vas and s241 with SWP on and off;
+  `*_focus.html` = two loop trips (embedded in the kernel pages), the rest = 420-instruction windows.
 - `tools/`: `findpc` and `dumprec` read `ooo_core --pipelog` dumps (build against r9999's
-  `pipeline_record.hh`).
+  `pipeline_record.hh`). `traceTemplate.html` is the gen_html template these pipetraces were made with.
 
 Sim runs: `ooo_core -f tsvc_swp.elf -m 37 --branch b.txt` (ROB 32, 512 KB L2, memory latency 37).

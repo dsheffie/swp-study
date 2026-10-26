@@ -5,52 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MIPSpro SWP on r9999</title>
 <meta name="description" content="MIPSpro 7.30 software pipelining on TSVC, run on the r9999 out-of-order MIPS core: where SWP helps, where it hurts, and why.">
-<style>
-:root {
-  --bg: #fbfaf7; --fg: #1d1d1b; --muted: #5d5b55; --rule: #dedbd2;
-  --code-bg: #f1efe8; --accent: #2f5d8a; --bad: #a33a2a; --good: #2e6b3a;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #17181a; --fg: #e6e4de; --muted: #a09d95; --rule: #34363a;
-    --code-bg: #212327; --accent: #8db7e0; --bad: #e08a7a; --good: #8fcf9b;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #17181a; --fg: #e6e4de; --muted: #a09d95; --rule: #34363a;
-  --code-bg: #212327; --accent: #8db7e0; --bad: #e08a7a; --good: #8fcf9b;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--bg); color: var(--fg);
-  font: 16px/1.6 Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-}
-main { max-width: 52rem; margin: 0 auto; padding: 2.5rem 16px 4rem; }
-h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 .4rem; }
-h2 { font-size: 1.35rem; margin: 2.6rem 0 .6rem; border-top: 1px solid var(--rule); padding-top: 1.4rem; }
-h3 { font-size: 1.05rem; margin: 1.6rem 0 .4rem; }
-p, li { max-width: 46rem; }
-.lede { color: var(--muted); font-size: 1.05rem; margin-top: 0; }
-a { color: var(--accent); }
-code, pre, table.num { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
-code { background: var(--code-bg); padding: .05em .3em; border-radius: 3px; font-size: .88em; }
-pre {
-  background: var(--code-bg); padding: .8rem 1rem; border-radius: 4px;
-  overflow-x: auto; font-size: .78rem; line-height: 1.45;
-}
-.tablewrap { overflow-x: auto; }
-table { border-collapse: collapse; margin: .8rem 0; font-size: .9rem; }
-th, td { padding: .3rem .7rem; border-bottom: 1px solid var(--rule); text-align: left; white-space: nowrap; }
-th { font-weight: 600; }
-td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
-.bad { color: var(--bad); }
-.good { color: var(--good); }
-.verdict {
-  border-left: 3px solid var(--accent); padding: .2rem 0 .2rem 1rem; margin: 1rem 0;
-}
-.traces a { display: inline-block; margin-right: 1rem; }
-footer { margin-top: 3rem; color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule); padding-top: 1rem; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
@@ -89,102 +44,41 @@ in the core, not by the quality of MIPSpro's schedules.</p>
 <code>sin</code>/<code>cos</code> at IPC 0.2. The full per-kernel table is <a href="results/ipc_table.txt">results/ipc_table.txt</a>,
 and the losers and winners with branch-likely and mispredict counts are in <a href="results/rank.txt">results/rank.txt</a>.</p>
 
+<h2>Kernels</h2>
+<p>The kernels with a page have source, MIPSpro's schedule notes, both loop bodies, an analysis, and A/B pipetraces.</p>
 <div class="tablewrap">
 <table class="num">
   <tr><th>kernel</th><th class="r">cycles SWP/noSWP</th><th class="r">insns SWP/noSWP</th><th class="r">IPC noSWP → SWP</th><th>cause</th></tr>
-  <tr><td>s318</td><td class="r bad">5.54</td><td class="r">1.25</td><td class="r">0.89 → 0.20</td><td>branch-likely restart</td></tr>
-  <tr><td>s3110</td><td class="r bad">3.26</td><td class="r">1.32</td><td class="r">0.62 → 0.25</td><td>branch-likely restart</td></tr>
-  <tr><td>s273</td><td class="r bad">2.55</td><td class="r">1.57</td><td class="r">0.78 → 0.48</td><td>branch-likely restart</td></tr>
-  <tr><td>s315</td><td class="r bad">2.42</td><td class="r">1.37</td><td class="r">0.74 → 0.42</td><td>branch-likely restart</td></tr>
-  <tr><td>vas</td><td class="r bad">1.18</td><td class="r">0.96</td><td class="r">1.33 → 1.08</td><td>LSU: store addresses on the critical path</td></tr>
-  <tr><td>s241</td><td class="r good">0.64</td><td class="r">1.00</td><td class="r">0.79 → 1.24</td><td>LSU: no-SWP stores clog the LSU</td></tr>
+  <tr><td><a href="kernels/s318.html">s318</a></td><td class="r bad">5.54</td><td class="r">1.25</td><td class="r">0.89 → 0.20</td><td>a not-taken branch-likely always restarts</td></tr>
+  <tr><td>s3110</td><td class="r bad">3.26</td><td class="r">1.32</td><td class="r">0.62 → 0.25</td><td>same as s318</td></tr>
+  <tr><td>s273</td><td class="r bad">2.55</td><td class="r">1.57</td><td class="r">0.78 → 0.48</td><td>same as s318</td></tr>
+  <tr><td>s315</td><td class="r bad">2.42</td><td class="r">1.37</td><td class="r">0.74 → 0.42</td><td>same as s318</td></tr>
+  <tr><td><a href="kernels/vas.html">vas</a></td><td class="r bad">1.18</td><td class="r">0.96</td><td class="r">1.33 → 1.08</td><td>LSU: store addresses on the critical path</td></tr>
+  <tr><td><a href="kernels/s241.html">s241</a></td><td class="r good">0.64</td><td class="r">1.00</td><td class="r">0.79 → 1.24</td><td>LSU: no-SWP stores clog the LSU</td></tr>
   <tr><td>s2712</td><td class="r good">0.49</td><td class="r">1.10</td><td class="r">0.53 → 1.19</td><td>if-conversion removes ~5000 mispredicts</td></tr>
   <tr><td>vif</td><td class="r good">0.45</td><td class="r">1.14</td><td class="r">0.39 → 0.97</td><td>if-conversion removes ~5000 mispredicts</td></tr>
   <tr><td>s317</td><td class="r good">0.38</td><td class="r">0.38</td><td class="r">0.69 → 0.68</td><td>fewer instructions, not a better schedule</td></tr>
 </table>
 </div>
 
-<h3>Reading the pipetraces</h3>
-<p>Each pipetrace page covers 420 retired instructions from the kernel's steady-state loop.
-F = fetch, A = allocate, C = complete, R = retire. The memory-pipe events are:
-Q = enters the LSU, S = LSU issue, H = L1D hit, Z = store data captured, K = wakeup.
-The excerpts below are generated by <a href="tools/dumprec.cc">tools/dumprec</a>, with cycles relative to the first fetch.</p>
-
-<h2>1. s318: a not-taken branch-likely always restarts</h2>
-<p>s318 is <i>isamax</i>, a max-abs reduction with an index. The R4000 has no conditional moves, so MIPSpro if-converts it with
-branch-likely as a predicate. <code>bc1tl .+8</code> executes its delay slot only when the condition is true, and the next PC
-is the same either way:</p>
-<pre>c.lt.s  $f1,$f2
-bc1tl   .+8          # if fcc: run the delay slot
-mov.s   $f1,$f0      # predicated update of max</pre>
-<p>In r9999, a branch-likely that is not taken nullifies its delay slot by restarting the pipeline
-(<code>t_mispred_br = ... || !t_take_br</code> in <code>exec.sv</code>). The predicate is almost always false for a max reduction,
-so all four steady-state <code>bc1tl</code> restart on nearly every execution: 4900 times each, about 20K mispredicts in total
-against 109 without SWP. No branch predictor can avoid this, because the restart happens whatever the prediction.</p>
-<pre>8002cff8  bc1tl 0x8002d000   F   1 A   6 C  13 R  15
-8002d000  addiu $at,$at,1    F  18 A  25 C  29 R  30     &lt;- fetch restarts after the bc1tl resolves
-8002d008  bc1tl 0x8002d010   F  19 A  26 C  30 R  31
-8002d010  beq $a1,$at,...    F  34 A  40 C  44 R  45     &lt;- and again</pre>
-<p>That works out to about 36 cycles per element with SWP, against about 6 without. The no-SWP loop uses ordinary <code>bc1f</code> branches,
-which the predictor learns. s3110, s273 and s315 lose the same way.</p>
-<p class="traces">Pipetraces: <a href="pipetraces/s318_swp.html">SWP</a> <a href="pipetraces/s318_noswp.html">no SWP</a></p>
-
-<h2>2. vas: SWP puts the store addresses on the critical path</h2>
-<p><code>a(ip(i)) = b(i)</code> is a scatter with no branch-likely and 11 mispredicts. Without SWP it takes 16 cycles per 4 elements;
-with SWP it takes about 19. MIPSpro's own R4000 estimate for its schedule was 21 cycles per 4 iterations.</p>
-<p>Two LSU properties combine here:</p>
-<ul>
-  <li><b>No load-past-store speculation.</b> A load may not issue while any older store hasn't done its address pass,
-    so in practice memory ops issue in program order, one per cycle.</li>
-  <li><b>An 8-entry LSU in which a store holds its slot until it retires and commits.</b></li>
-</ul>
-<p>The SWP code issues 8 loads (4× <code>b</code>, 4× <code>ip</code>), then 8 <code>sll</code>/<code>addu</code> to form the
-addresses, then 4 stores. The loads fill the LSU and the mem uop queue, so in-order allocation stalls and the address arithmetic
-is allocated late. The stores' addresses are therefore late, and the next group's <code>b</code> loads, whose addresses are already
-known, wait behind those stores:</p>
-<pre>80037ebc  lwc1 $f0, ($a2)       F   3 A   8 C  19   Q15  S16  H18
-80037ec0  sll $at, $at, 2       F   4 A  13 C  17                 &lt;- fetched at 4, allocated at 13
- ...
-80037edc  addu $at, $t0, $at    F   7 A  17 C  24
-80037ee0  swc1 $f0, -4($at)     F   8 A  17 C  26   Q18  Z21  S23  &lt;- address pass waits on the addu
- ...
-80037ef8  lwc1 $f2, 0x1c($a2)   F  17 A  20 C  31   Q23  S28  H30  &lt;- known address, still waits for the older stores</pre>
-<p>The no-SWP code has the same instructions interleaved (<code>lw</code>, <code>sll</code>, <code>addu</code>, <code>lwc1</code>, …),
-so each store's address is ready almost as soon as its data and the LSU keeps flowing. s491, also a scatter, loses 1.12× and is
-probably the same story.</p>
-<p class="traces">Pipetraces: <a href="pipetraces/vas_swp.html">SWP</a> <a href="pipetraces/vas_noswp.html">no SWP</a></p>
-
-<h2>3. s241: SWP wins by not clogging the LSU</h2>
-<p><code>a(i) = b(i)*c(i)*d(i); b(i) = a(i)*a(i+1)*d(i)</code>. SWP runs it 1.56× faster with the same instruction count
-and essentially the same mispredicts (9 against 10): about 10 cycles per element against 17.5.</p>
-<p>The no-SWP loop is unrolled 4×: 16 loads, then 16 <code>mul.s</code> in 3-deep chains, then all 8 stores at the bottom.
-The stores' data arrives only when the multiply chains finish, and each store keeps its LSU slot until it commits, so the 8 stores
-fill all 8 slots. The next trip's first load is allocated at cycle 59 but doesn't enter the LSU until <b>cycle 81</b>, and
-consecutive trips never overlap:</p>
-<pre>8001af54  swc1 $f7, -0x14($a1)  F  53 A  57 C  64 R  78   Q60  S61  Z64
-8001af5c  swc1 $f3, -0x14($a0)  F  55 A  59 C  65 R  79   Q61  S62  Z76   &lt;- data waits on the mul chain
-8001aeac  lwc1 $f12, 8($a2)     F  56 A  59 C  85 R  86   Q81  S82  H84   &lt;- next trip: 22 cycles to get an LSU slot</pre>
-<p>MIPSpro's schedule (25 cycles per 2 iterations, bound by the R4000 FP multiplier) has each stage store values computed by the
-<i>previous</i> stage. Store data is ready as soon as the store reaches the LSU, stores drain quickly, and loads get a slot about 2 cycles
-after allocation:</p>
-<pre>800220ec  swc1 $f1, 4($a1)      F   3 A  10 C  17 R  22   Q13  S14  Z19
-800220f0  lwc1 $f1, 0x14($v1)   F   4 A  11 C  18 R  23   Q14  S15  H17
-800220f8  swc1 $f0, 8($a1)      F   6 A  12 C  19 R  24   Q15  S16  Z20</pre>
-<p class="traces">Pipetraces: <a href="pipetraces/s241_swp.html">SWP</a> <a href="pipetraces/s241_noswp.html">no SWP</a></p>
-
 <h2>Conclusions</h2>
 <div class="verdict">
-<p><b>Branch-likely.</b> The largest SWP losses all come from the not-taken branch-likely restart. MIPSpro uses
-<code>b*l .+8</code> as predication for R4000. To make this cheap, the delay slot of a likely branch could be renamed as a
-predicated op that selects the old destination register when the branch is not taken, instead of flushing.</p>
-<p><b>LSU.</b> vas (an SWP loss) and s241 (an SWP win) are the same bottleneck viewed from opposite sides: an 8-entry LSU where
-each store holds its slot until commit, combined with no speculation of loads past unresolved store addresses. Freeing a store's LSU slot
-when it moves to the store buffer, or adding memory-dependence speculation, should give the no-SWP code most of s241's gain and
-remove vas's loss. That is also a likely contributor to the low base IPC (geomean 0.8).</p>
+<p><b>Branch-likely.</b> The largest SWP losses all come from the not-taken branch-likely restart
+(<a href="kernels/s318.html">s318</a>). MIPSpro uses <code>b*l .+8</code> as predication for R4000. To make this cheap, the delay slot
+of a likely branch could be renamed as a predicated op that selects the old destination register when the branch is not taken,
+instead of flushing.</p>
+<p><b>LSU.</b> <a href="kernels/vas.html">vas</a> (an SWP loss) and <a href="kernels/s241.html">s241</a> (an SWP win) are the same
+bottleneck viewed from opposite sides: an 8-entry LSU where each store holds its slot until commit, combined with no speculation of loads
+past unresolved store addresses. Freeing a store's LSU slot when it moves to the store buffer, or adding memory-dependence
+speculation, should give the no-SWP code most of s241's gain and remove vas's loss. That is also a likely contributor to the low base
+IPC (geomean 0.8).</p>
 </div>
 
 <h2>Contents</h2>
 <ul>
+  <li><a href="https://github.com/dsheffie/swp-study/tree/main/kernels">kernels/</a>: one page per analyzed kernel.</li>
+  <li><a href="https://github.com/dsheffie/swp-study/tree/main/pipetraces">pipetraces/</a>: r9999 <code>gen_html</code> pipetraces.
+    <code>*_focus.html</code> covers two loop trips and is embedded in the kernel pages; the others are 420-instruction windows.</li>
   <li><a href="https://github.com/dsheffie/swp-study/tree/main/harness">harness/</a>: the n32 link shim, runtime, driver generator, MIPSpro objects and their build scripts. <code>make</code> rebuilds <code>tsvc_swp.elf</code>/<code>tsvc_noswp.elf</code> byte-identical to the ones measured.</li>
   <li><a href="https://github.com/dsheffie/swp-study/tree/main/listings">listings/</a>: MIPSpro <code>-S</code> listings with SWP on and off. The <code>#&lt;swps&gt;</code> notes give MIPSpro's own cycles-per-iteration estimates.</li>
   <li><a href="https://github.com/dsheffie/swp-study/tree/main/results">results/</a>: RTL and ISS per-kernel Counts, branch mispredict logs, the IPC table and the ranking.</li>
